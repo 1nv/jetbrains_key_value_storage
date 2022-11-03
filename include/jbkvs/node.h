@@ -24,6 +24,8 @@ namespace jbkvs
         static NodePtr create();
         static NodePtr create(const NodePtr& parent, const std::string& subPath);
 
+        NodePtr getChild(const std::string& name) const;
+
         template <typename T>
         std::optional<T> get(const TKey& key) const
         {

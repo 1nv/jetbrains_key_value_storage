@@ -31,4 +31,10 @@ namespace jbkvs
         _children.clear();
     }
 
+    NodePtr Node::getChild(const std::string& name) const
+    {
+        std::optional<NodePtr> optionalPtr = _children.get(name);
+        return optionalPtr ? *optionalPtr : NodePtr();
+    }
+
 } // namespace jbkvs

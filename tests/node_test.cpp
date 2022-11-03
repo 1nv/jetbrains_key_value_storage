@@ -14,6 +14,21 @@ TEST(NodeTest, SimpleNodeHierarchyCanBeCreated)
     jbkvs::NodePtr childA = jbkvs::Node::create(root, "A"s);
     jbkvs::NodePtr childB = jbkvs::Node::create(root, "B"s);
     jbkvs::NodePtr subChildA1 = jbkvs::Node::create(childA, "1"s);
+
+    EXPECT_EQ(root->getChild("A"s), childA);
+    EXPECT_EQ(root->getChild("B"s), childB);
+    EXPECT_EQ(childA->getChild("1"s), subChildA1);
+}
+
+TEST(NodeTest, GetChildReturnsOnlyExistingChildren)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr childA = jbkvs::Node::create(root, "A"s);
+    jbkvs::NodePtr childB = jbkvs::Node::create(root, "B"s);
+
+    EXPECT_EQ(root->getChild("A"s), childA);
+    EXPECT_EQ(root->getChild("B"s), childB);
+    EXPECT_EQ(root->getChild("C"s), jbkvs::NodePtr());
 }
 
 TEST(NodeTest, GetPutRemoveSequenceWorks)
