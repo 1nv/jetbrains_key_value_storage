@@ -31,6 +31,21 @@ TEST(NodeTest, GetChildReturnsOnlyExistingChildren)
     EXPECT_EQ(root->getChild("C"s), jbkvs::NodePtr());
 }
 
+TEST(NodeTest, DetachRemovesNodeFromParent)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr child = jbkvs::Node::create(root, "A"s);
+    child->detach();
+
+    EXPECT_EQ(root->getChild("A"s), jbkvs::NodePtr());
+}
+
+TEST(NodeTest, DetachOnRootWorks)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    root->detach();
+}
+
 TEST(NodeTest, GetPutRemoveSequenceWorks)
 {
     jbkvs::NodePtr node = jbkvs::Node::create(jbkvs::NodePtr(), std::string());

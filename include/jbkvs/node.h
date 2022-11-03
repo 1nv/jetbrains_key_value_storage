@@ -11,18 +11,23 @@ namespace jbkvs
 {
 
     using NodePtr = std::shared_ptr<class Node>;
+    using NodeWeakPtr = std::weak_ptr<class Node>;
     using TKey = uint32_t;
 
     class Node
     {
         using TValue = std::variant<uint32_t, uint64_t, float, double, std::string>;
 
+        NodeWeakPtr _parent;
+        std::string _name;
         detail::ConcurrentMap<std::string, NodePtr> _children;
         detail::ConcurrentMap<TKey, TValue> _data;
 
     public:
         static NodePtr create();
-        static NodePtr create(const NodePtr& parent, const std::string& subPath);
+        static NodePtr create(const NodePtr& parent, const std::string& name);
+
+        void detach();
 
         NodePtr getChild(const std::string& name) const;
 
@@ -57,7 +62,7 @@ namespace jbkvs
         }
 
     private:
-        Node();
+        Node(const NodePtr& parent, const std::string& name);
         ~Node();
 
         Node(const Node& other) = delete;
