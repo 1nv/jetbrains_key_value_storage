@@ -11,10 +11,10 @@ namespace jbkvs
 {
 
     using NodePtr = std::shared_ptr<class Node>;
+    using TKey = uint32_t;
 
     class Node
     {
-        using TKey = uint32_t;
         using TValue = std::variant<uint32_t, uint64_t, float, double, std::string>;
 
         detail::ConcurrentMap<std::string, NodePtr> _children;
