@@ -183,3 +183,151 @@ TEST(StorageTest, MountingAndUnmountingSameNodeWithDifferentRootPathsWorks)
     ASSERT_EQ(!!data, true);
     EXPECT_EQ(*data, "data"s);
 }
+
+TEST(StorageTest, MountingAndUnmountingSameNodeTowardsDifferentPathsWorks)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr child = jbkvs::Node::create(root, "foo"s);
+    child->put(123u, "data"s);
+
+    jbkvs::Storage storage;
+    storage.mount("/virtual/path"s, root);
+    bool mounted = storage.mount("/virtual/another/path"s, root);
+    ASSERT_EQ(mounted, true);
+
+    jbkvs::StorageNodePtr storageNode1 = storage.getNode("/virtual/path/foo"s);
+    ASSERT_EQ(!!storageNode1, true);
+
+    auto data = storageNode1->get<std::string>(123u);
+    ASSERT_EQ(!!data, true);
+    EXPECT_EQ(*data, "data"s);
+
+    jbkvs::StorageNodePtr storageNode2 = storage.getNode("/virtual/another/path/foo"s);
+    ASSERT_EQ(!!storageNode2, true);
+
+    data = storageNode2->get<std::string>(123u);
+    ASSERT_EQ(!!data, true);
+    EXPECT_EQ(*data, "data"s);
+
+    bool unmounted = storage.unmount("/virtual/path"s, root);
+    ASSERT_EQ(unmounted, true);
+
+    jbkvs::StorageNodePtr storageNode3 = storage.getNode("/virtual/another/path/foo"s);
+    ASSERT_EQ(!!storageNode3, true);
+
+    data = storageNode3->get<std::string>(123u);
+    ASSERT_EQ(!!data, true);
+    EXPECT_EQ(*data, "data"s);
+}
+
+TEST(StorageTest, MountingAndUnmountingSameNodeTowardsDifferentStoragesWorks)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr child = jbkvs::Node::create(root, "foo"s);
+    child->put(123u, "data"s);
+
+    jbkvs::Storage storage1, storage2;
+    storage1.mount("/virtual/path"s, root);
+    bool mounted = storage2.mount("/"s, root);
+    ASSERT_EQ(mounted, true);
+
+    jbkvs::StorageNodePtr storageNode1 = storage1.getNode("/virtual/path/foo"s);
+    ASSERT_EQ(!!storageNode1, true);
+
+    auto data = storageNode1->get<std::string>(123u);
+    ASSERT_EQ(!!data, true);
+    EXPECT_EQ(*data, "data"s);
+
+    jbkvs::StorageNodePtr storageNode2 = storage2.getNode("/foo"s);
+    ASSERT_EQ(!!storageNode2, true);
+
+    data = storageNode2->get<std::string>(123u);
+    ASSERT_EQ(!!data, true);
+    EXPECT_EQ(*data, "data"s);
+
+    bool unmounted = storage1.unmount("/virtual/path"s, root);
+    ASSERT_EQ(unmounted, true);
+
+    jbkvs::StorageNodePtr storageNode3 = storage2.getNode("/foo"s);
+    ASSERT_EQ(!!storageNode3, true);
+
+    data = storageNode3->get<std::string>(123u);
+    ASSERT_EQ(!!data, true);
+    EXPECT_EQ(*data, "data"s);
+}
+
+TEST(StorageTest, DataFromMultipleNodesIsMerged)
+{
+    jbkvs::NodePtr root1 = jbkvs::Node::create();
+    jbkvs::NodePtr child1 = jbkvs::Node::create(root1, "foo"s);
+    child1->put(123u, "data1"s);
+
+    jbkvs::NodePtr root2 = jbkvs::Node::create();
+    jbkvs::NodePtr child2 = jbkvs::Node::create(root2, "foo"s);
+    child2->put(456u, "data2"s);
+
+    jbkvs::NodePtr root3 = jbkvs::Node::create();
+    child2->put(789u, "data3"s);
+
+
+    jbkvs::Storage storage;
+    bool mounted;
+    mounted = storage.mount("/"s, root1);
+    ASSERT_EQ(mounted, true);
+    mounted = storage.mount("/"s, root2);
+    ASSERT_EQ(mounted, true);
+    mounted = storage.mount("/foo"s, root3);
+    ASSERT_EQ(mounted, true);
+
+    root3.reset();
+    root2.reset();
+    root1.reset();
+
+    jbkvs::StorageNodePtr storageNode = storage.getNode("/foo"s);
+    ASSERT_EQ(!!storageNode, true);
+
+    auto data1 = storageNode->get<std::string>(123u);
+    ASSERT_EQ(!!data1, true);
+    EXPECT_EQ(*data1, "data1"s);
+    auto data2 = storageNode->get<std::string>(456u);
+    ASSERT_EQ(!!data2, true);
+    EXPECT_EQ(*data2, "data2"s);
+    auto data3 = storageNode->get<std::string>(789u);
+    ASSERT_EQ(!!data3, true);
+    EXPECT_EQ(*data3, "data3"s);
+}
+
+TEST(StorageTest, CollidingDataWithTheSameTypeFromMultipleNodesIsRetrievedFromTheOlderNode)
+{
+    jbkvs::NodePtr root1= jbkvs::Node::create();
+    jbkvs::NodePtr child1 = jbkvs::Node::create(root1, "foo"s);
+    child1->put(123u, "data1"s);
+
+    jbkvs::NodePtr root2 = jbkvs::Node::create();
+    jbkvs::NodePtr child2 = jbkvs::Node::create(root2, "foo"s);
+    child2->put(123u, "data2"s);
+
+    jbkvs::NodePtr root3 = jbkvs::Node::create();
+    child2->put(123u, "data3"s);
+
+
+    jbkvs::Storage storage;
+    bool mounted;
+    mounted = storage.mount("/"s, root1);
+    ASSERT_EQ(mounted, true);
+    mounted = storage.mount("/"s, root2);
+    ASSERT_EQ(mounted, true);
+    mounted = storage.mount("/foo"s, root3);
+    ASSERT_EQ(mounted, true);
+
+    root3.reset();
+    root2.reset();
+    root1.reset();
+
+    jbkvs::StorageNodePtr storageNode = storage.getNode("/foo"s);
+    ASSERT_EQ(!!storageNode, true);
+
+    auto data = storageNode->get<std::string>(123u);
+    ASSERT_EQ(!!data, true);
+    EXPECT_EQ(*data, "data1"s);
+}
