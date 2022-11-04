@@ -15,6 +15,7 @@ namespace jbkvs
     using TKey = uint32_t;
 
     class Node
+        : public detail::NonCopyableMixin<Node>
     {
         using TValue = std::variant<uint32_t, uint64_t, float, double, std::string>;
 
@@ -64,9 +65,6 @@ namespace jbkvs
     private:
         Node(const NodePtr& parent, const std::string& name);
         ~Node();
-
-        Node(const Node& other) = delete;
-        Node& operator=(const Node& other) = delete;
     };
 
 } // namespace jbkvs

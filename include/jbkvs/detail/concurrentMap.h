@@ -4,11 +4,14 @@
 #include <map>
 #include <optional>
 
+#include <jbkvs/detail/mixins.h>
+
 namespace jbkvs::detail
 {
 
     template <typename TKey, typename TValue>
     class SharedMutexMap
+        : public NonCopyableMixin<SharedMutexMap<TKey, TValue>>
     {
         mutable std::shared_mutex _mutex;
         std::map<TKey, TValue> _map;
@@ -22,9 +25,6 @@ namespace jbkvs::detail
         ~SharedMutexMap() noexcept
         {
         }
-
-        SharedMutexMap(const SharedMutexMap& other) = delete;
-        SharedMutexMap& operator=(const SharedMutexMap& other) = delete;
 
         std::optional<TValue> get(const TKey& key) const noexcept
         {
