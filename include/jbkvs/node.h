@@ -46,15 +46,9 @@ namespace jbkvs
         }
 
         template <typename T>
-        void put(const TKey& key, const T& value)
-        {
-            _data.put(key, value);
-        }
-
-        template <typename T>
         void put(const TKey& key, T&& value)
         {
-            _data.put(key, std::move(value));
+            _data.put(key, std::forward<T>(value));
         }
 
         bool remove(const TKey& key)
