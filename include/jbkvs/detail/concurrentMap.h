@@ -69,6 +69,56 @@ namespace jbkvs::detail
 
             return _map.size();
         }
+
+        class ConstIteratorEndTag
+        {
+        };
+
+        class ConstIterator
+            : NonCopyableMixin<ConstIterator>
+        {
+            std::shared_lock<std::shared_mutex> _lock;
+            typename std::map<TKey, TValue>::const_iterator _it;
+            typename std::map<TKey, TValue>::const_iterator _endIt;
+
+        public:
+            ConstIterator(const SharedMutexMap<TKey, TValue>& map)
+                : _lock(map._mutex)
+                , _it(map._map.begin())
+                , _endIt(map._map.end())
+            {
+            }
+
+            ~ConstIterator()
+            {
+            }
+
+            const std::pair<const TKey, TValue>& operator*() const
+            {
+                return *_it;
+            }
+
+            ConstIterator& operator++()
+            {
+                ++_it;
+                return *this;
+            }
+
+            bool operator!=(const ConstIteratorEndTag& endTag) const
+            {
+                return _it != _endIt;
+            }
+        };
+
+        ConstIterator begin() const
+        {
+            return ConstIterator(*this);
+        }
+
+        ConstIteratorEndTag end() const
+        {
+            return ConstIteratorEndTag();
+        }
     };
 
     // TODO: provide lock-free map implementation.
