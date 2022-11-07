@@ -308,7 +308,7 @@ TEST(StorageTest, CollidingDataWithTheSameTypeFromMultipleNodesIsRetrievedFromTh
     child2->put(123u, "data2"s);
 
     jbkvs::NodePtr root3 = jbkvs::Node::create();
-    child2->put(123u, "data3"s);
+    root3->put(123u, "data3"s);
 
 
     jbkvs::Storage storage;
