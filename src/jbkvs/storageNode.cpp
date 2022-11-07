@@ -94,7 +94,7 @@ namespace jbkvs
         {
             if (child->_isReadyForEviction())
             {
-                _children.erase(childName);
+                _children.erase(childIt);
             }
 
             assert(_virtualMountCounter > 0);
@@ -148,7 +148,7 @@ namespace jbkvs
 
             if (child->_isReadyForEviction())
             {
-                _children.erase(childName);
+                _children.erase(childIt);
             }
         }
 
