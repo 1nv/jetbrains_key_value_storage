@@ -37,9 +37,9 @@ namespace jbkvs
             std::shared_lock lock(_mutex);
 
             std::optional<T> result;
-            for (const MountedNode& mountedNode : _mountedNodes)
+            for (size_t i = _mountedNodes.size() - 1; ~i; --i)
             {
-                result = mountedNode.node->get<T>(key);
+                result = _mountedNodes[i].node->get<T>(key);
                 if (result)
                 {
                     return result;
