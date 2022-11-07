@@ -62,7 +62,7 @@ namespace jbkvs
         child->_mountVirtual(subPath, node);
     }
 
-    bool StorageNode::_unmountVirtual(const std::string& path, const NodePtr& node)
+    StorageNode::_UnmountResult StorageNode::_unmountVirtual(const std::string& path, const NodePtr& node)
     {
         size_t length = path.length();
 
@@ -83,25 +83,34 @@ namespace jbkvs
         auto childIt = _children.find(childName);
         if (childIt == _children.end())
         {
-            return false;
+            return {};
         }
 
         const StorageNodePtr& child = childIt->second;
         std::string subPath = (end == length) ? std::string() : path.substr(end + 1);
-        bool unmounted = child->_unmountVirtual(subPath, node);
+        _UnmountResult childUnmountResult = child->_unmountVirtual(subPath, node);
 
-        if (unmounted)
+        if (!childUnmountResult.success)
         {
-            if (child->_isReadyForEviction())
-            {
-                _children.erase(childIt);
-            }
-
-            assert(_virtualMountCounter > 0);
-            --_virtualMountCounter;
+            return {};
         }
 
-        return unmounted;
+        if (childUnmountResult.detach)
+        {
+            _children.erase(childIt);
+        }
+
+        assert(_virtualMountCounter > 0);
+        --_virtualMountCounter;
+
+        _UnmountResult result = {};
+        result.success = true;
+        if (_isReadyForDetach())
+        {
+            result.detach = true;
+        }
+
+        return result;
     }
 
     void StorageNode::_mount(const NodePtr& node, size_t depth)
@@ -122,7 +131,7 @@ namespace jbkvs
         }
     }
 
-    bool StorageNode::_unmount(const NodePtr& node, size_t depth)
+    StorageNode::_UnmountResult StorageNode::_unmount(const NodePtr& node, size_t depth)
     {
         std::unique_lock lock(_mutex);
 
@@ -134,7 +143,7 @@ namespace jbkvs
         if (it == _mountedNodes.end())
         {
             assert(depth == 0);
-            return false;
+            return {};
         }
 
         for (const auto& [childName, childNode] : node->getChildren())
@@ -143,10 +152,10 @@ namespace jbkvs
             assert(childIt != _children.end());
 
             const StorageNodePtr& child = childIt->second;
-            bool unmounted = child->_unmount(childNode, depth + 1);
-            assert(unmounted);
+            _UnmountResult childUnmountResult = child->_unmount(childNode, depth + 1);
+            assert(childUnmountResult.success);
 
-            if (child->_isReadyForEviction())
+            if (childUnmountResult.detach)
             {
                 _children.erase(childIt);
             }
@@ -154,10 +163,17 @@ namespace jbkvs
 
         _mountedNodes.erase(it);
 
-        return true;
+        _UnmountResult result = {};
+        result.success = true;
+        if (_isReadyForDetach())
+        {
+            result.detach = true;
+        }
+
+        return result;
     }
 
-    bool StorageNode::_isReadyForEviction() const
+    bool StorageNode::_isReadyForDetach() const
     {
         return _virtualMountCounter == 0 && _mountedNodes.empty();
     }

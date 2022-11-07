@@ -56,12 +56,18 @@ namespace jbkvs
         StorageNode();
         ~StorageNode();
 
-        void _mountVirtual(const std::string& path, const NodePtr& node);
-        bool _unmountVirtual(const std::string& path, const NodePtr& node);
-        void _mount(const NodePtr& node, size_t depth);
-        bool _unmount(const NodePtr& node, size_t depth);
+        struct _UnmountResult
+        {
+            bool success : 1;
+            bool detach : 1;
+        };
 
-        bool _isReadyForEviction() const;
+        void _mountVirtual(const std::string& path, const NodePtr& node);
+        _UnmountResult _unmountVirtual(const std::string& path, const NodePtr& node);
+        void _mount(const NodePtr& node, size_t depth);
+        _UnmountResult _unmount(const NodePtr& node, size_t depth);
+
+        bool _isReadyForDetach() const;
     };
 
 } // namespace jbkvs

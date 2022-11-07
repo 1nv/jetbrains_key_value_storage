@@ -40,8 +40,8 @@ namespace jbkvs
             return false;
         }
 
-        bool unmounted = _root->_unmountVirtual(path.substr(1), node);
-        return unmounted;
+        StorageNode::_UnmountResult unmountResult = _root->_unmountVirtual(path.substr(1), node);
+        return unmountResult.success;
     }
 
     StorageNodePtr Storage::getNode(const std::string& path) const
