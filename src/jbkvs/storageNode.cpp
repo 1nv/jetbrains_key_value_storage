@@ -137,12 +137,12 @@ namespace jbkvs
     {
         std::unique_lock lock(_mutex);
 
-        auto it = std::find_if(_mountedNodes.begin(), _mountedNodes.end(), [&](const MountedNode& mountedNode)
+        auto it = std::find_if(_mountedNodes.rbegin(), _mountedNodes.rend(), [&](const MountedNode& mountedNode)
             {
                 return mountedNode.node == node && mountedNode.depth == depth;
             });
 
-        if (it == _mountedNodes.end())
+        if (it == _mountedNodes.rend())
         {
             assert(depth == 0);
             return {};
@@ -163,7 +163,7 @@ namespace jbkvs
             }
         }
 
-        _mountedNodes.erase(it);
+        _mountedNodes.erase(std::next(it).base());
 
         node->_onUnmounted();
 
