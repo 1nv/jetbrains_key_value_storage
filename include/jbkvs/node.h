@@ -20,7 +20,7 @@ namespace jbkvs
         using TValue = std::variant<uint32_t, uint64_t, float, double, std::string>;
 
         NodeWeakPtr _parent;
-        std::string _name;
+        const std::string _name;
         detail::ConcurrentMap<std::string, NodePtr> _children;
         detail::ConcurrentMap<TKey, TValue> _data;
 
