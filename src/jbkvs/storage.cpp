@@ -75,7 +75,7 @@ namespace jbkvs
                 return StorageNodePtr();
             }
 
-            if (end == length)
+            if (end >= length - 1)
             {
                 break;
             }

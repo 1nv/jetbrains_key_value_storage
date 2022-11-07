@@ -378,3 +378,28 @@ TEST(StorageTest, DoubleMountingAndUnmountingSameNodePrioritizesLastMountedNode)
     unmounted = storage.unmount("/"s, root1);
     ASSERT_EQ(unmounted, true);
 }
+
+TEST(StorageTest, PathCanEndWithSeparator)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    root->put(123u, "data1"s);
+
+    jbkvs::Storage storage;
+    bool mounted;
+    mounted = storage.mount("/path/"s, root);
+    ASSERT_EQ(mounted, true);
+
+    jbkvs::StorageNodePtr storageNode = storage.getNode("/path/"s);
+    ASSERT_EQ(!!storageNode, true);
+
+    auto data = storageNode->get<std::string>(123u);
+    ASSERT_EQ(!!data, true);
+    EXPECT_EQ(*data, "data1"s);
+
+    storageNode = storage.getNode("/path"s);
+    ASSERT_EQ(!!storageNode, true);
+
+    data = storageNode->get<std::string>(123u);
+    ASSERT_EQ(!!data, true);
+    EXPECT_EQ(*data, "data1"s);
+}
