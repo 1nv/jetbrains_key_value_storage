@@ -28,7 +28,7 @@ namespace jbkvs
 
         size_t _virtualMountCounter;
         std::vector<MountedNode> _mountedNodes;
-        std::map<std::string, StorageNodePtr> _children;
+        std::map<std::string, StorageNodePtr, std::less<>> _children;
 
     public:
         template <typename T>
@@ -48,7 +48,7 @@ namespace jbkvs
             return result;
         }
 
-        StorageNodePtr getChild(const std::string& name) const;
+        StorageNodePtr getChild(const std::string_view& name) const;
 
     private:
         static StorageNodePtr _create();
@@ -62,8 +62,8 @@ namespace jbkvs
             bool detach : 1;
         };
 
-        void _mountVirtual(const std::string& path, const NodePtr& node);
-        _UnmountResult _unmountVirtual(const std::string& path, const NodePtr& node);
+        void _mountVirtual(const std::string_view& path, const NodePtr& node);
+        _UnmountResult _unmountVirtual(const std::string_view& path, const NodePtr& node);
         void _mount(const NodePtr& node, size_t depth);
         _UnmountResult _unmount(const NodePtr& node, size_t depth);
 

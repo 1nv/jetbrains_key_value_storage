@@ -24,7 +24,7 @@ namespace jbkvs
     {
     }
 
-    StorageNodePtr StorageNode::getChild(const std::string& name) const
+    StorageNodePtr StorageNode::getChild(const std::string_view& name) const
     {
         std::shared_lock lock(_mutex);
 
@@ -32,7 +32,7 @@ namespace jbkvs
         return (it != _children.end()) ? it->second : StorageNodePtr();
     }
 
-    void StorageNode::_mountVirtual(const std::string& path, const NodePtr& node)
+    void StorageNode::_mountVirtual(const std::string_view& path, const NodePtr& node)
     {
         size_t length = path.length();
 
@@ -42,11 +42,11 @@ namespace jbkvs
         }
 
         size_t end = path.find(_pathSeparator);
-        if (end == std::string::npos)
+        if (end == std::string_view::npos)
         {
             end = length;
         }
-        std::string childName = path.substr(0, end);
+        std::string childName = std::string(path.substr(0, end));
 
         std::unique_lock lock(_mutex);
 
@@ -58,11 +58,11 @@ namespace jbkvs
             child = _create();
         }
 
-        std::string subPath = (end == length) ? std::string() : path.substr(end + 1);
+        std::string_view subPath = (end == length) ? std::string_view() : path.substr(end + 1);
         child->_mountVirtual(subPath, node);
     }
 
-    StorageNode::_UnmountResult StorageNode::_unmountVirtual(const std::string& path, const NodePtr& node)
+    StorageNode::_UnmountResult StorageNode::_unmountVirtual(const std::string_view& path, const NodePtr& node)
     {
         size_t length = path.length();
 
@@ -72,11 +72,11 @@ namespace jbkvs
         }
 
         size_t end = path.find(_pathSeparator);
-        if (end == std::string::npos)
+        if (end == std::string_view::npos)
         {
             end = length;
         }
-        std::string childName = path.substr(0, end);
+        std::string_view childName = path.substr(0, end);
 
         std::unique_lock lock(_mutex);
 
@@ -87,7 +87,7 @@ namespace jbkvs
         }
 
         const StorageNodePtr& child = childIt->second;
-        std::string subPath = (end == length) ? std::string() : path.substr(end + 1);
+        std::string_view subPath = (end == length) ? std::string_view() : path.substr(end + 1);
         _UnmountResult childUnmountResult = child->_unmountVirtual(subPath, node);
 
         if (!childUnmountResult.success)

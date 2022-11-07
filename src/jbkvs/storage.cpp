@@ -24,7 +24,9 @@ namespace jbkvs
             return false;
         }
 
-        _root->_mountVirtual(path.substr(1), node);
+        std::string_view pathView = path;
+
+        _root->_mountVirtual(pathView.substr(1), node);
         return true;
     }
 
