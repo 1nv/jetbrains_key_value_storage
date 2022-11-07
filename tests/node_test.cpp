@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <jbkvs/node.h>
+#include <jbkvs/storage.h>
 
 using namespace std::literals::string_literals;
 
@@ -35,15 +36,18 @@ TEST(NodeTest, DetachRemovesNodeFromParent)
 {
     jbkvs::NodePtr root = jbkvs::Node::create();
     jbkvs::NodePtr child = jbkvs::Node::create(root, "A"s);
-    child->detach();
+    bool detached = child->detach();
 
+    ASSERT_EQ(detached, true);
     EXPECT_EQ(root->getChild("A"s), jbkvs::NodePtr());
 }
 
-TEST(NodeTest, DetachOnRootWorks)
+TEST(NodeTest, DetachOnRootShouldNotWork)
 {
     jbkvs::NodePtr root = jbkvs::Node::create();
-    root->detach();
+    bool detached = root->detach();
+
+    ASSERT_EQ(detached, false);
 }
 
 TEST(NodeTest, GetPutRemoveSequenceWorks)
@@ -108,4 +112,27 @@ TEST(NodeTest, MultipleValueTypesAreSupported)
     auto sr = node->get<std::string>(5u);
     ASSERT_EQ(!!sr, true);
     EXPECT_EQ(*sr, s);
+}
+
+TEST(NodeTest, CreationOfMountedNodeChildShoudBeDisallowed)
+{
+    jbkvs::NodePtr node = jbkvs::Node::create();
+
+    jbkvs::Storage storage;
+    storage.mount("/"s, node);
+
+    jbkvs::NodePtr child = jbkvs::Node::create(node, "test"s);
+    EXPECT_EQ(!!child, false);
+}
+
+TEST(NodeTest, DetachOfMountedNodeShoudBeDisallowed)
+{
+    jbkvs::NodePtr node = jbkvs::Node::create();
+    jbkvs::NodePtr child = jbkvs::Node::create(node, "test"s);
+
+    jbkvs::Storage storage;
+    storage.mount("/"s, node);
+
+    bool detached = child->detach();
+    EXPECT_EQ(detached, false);
 }

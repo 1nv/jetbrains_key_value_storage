@@ -1,4 +1,5 @@
 #include <jbkvs/node.h>
+#include <assert.h>
 
 namespace jbkvs
 {
@@ -18,17 +19,31 @@ namespace jbkvs
             }
         };
 
-        NodePtr newNode = std::make_shared<MakeSharedEnabledNode>(parent, name);
         if (parent)
         {
+            std::shared_lock lock(parent->_mountMutex);
+
+            if (parent->_mountCounter > 0)
+            {
+                return NodePtr();
+            }
+
+            NodePtr newNode = std::make_shared<MakeSharedEnabledNode>(parent, name);
             parent->_children.put(name, newNode);
+            return newNode;
         }
-        return newNode;
+        else
+        {
+            NodePtr newNode = std::make_shared<MakeSharedEnabledNode>(parent, name);
+            return newNode;
+        }
     }
 
     Node::Node(const NodePtr& parent, const std::string& name)
         : _parent(parent)
         , _name(name)
+        , _mountMutex()
+        , _mountCounter()
         , _children()
         , _data()
     {
@@ -39,13 +54,25 @@ namespace jbkvs
         _children.clear();
     }
 
-    void Node::detach()
+    bool Node::detach()
     {
         NodePtr parent = _parent.lock();
         if (parent)
         {
+            std::shared_lock lock(parent->_mountMutex);
+
+            if (parent->_mountCounter > 0)
+            {
+                return false;
+            }
+
             _parent.reset();
             parent->_children.remove(_name);
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 
@@ -53,6 +80,21 @@ namespace jbkvs
     {
         std::optional<NodePtr> optionalPtr = _children.get(name);
         return optionalPtr ? *optionalPtr : NodePtr();
+    }
+
+    void Node::_onMounting()
+    {
+        std::unique_lock lock(_mountMutex);
+
+        ++_mountCounter;
+    }
+
+    void Node::_onUnmounted()
+    {
+        std::unique_lock lock(_mountMutex);
+
+        assert(_mountCounter > 0);
+        --_mountCounter;
     }
 
 } // namespace jbkvs

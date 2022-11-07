@@ -17,10 +17,14 @@ namespace jbkvs
     class Node
         : public detail::NonCopyableMixin<Node>
     {
+        friend class StorageNode;
+
         using TValue = std::variant<uint32_t, uint64_t, float, double, std::string>;
 
         NodeWeakPtr _parent;
         const std::string _name;
+        std::shared_mutex _mountMutex;
+        size_t _mountCounter;
         detail::ConcurrentMap<std::string, NodePtr> _children;
         detail::ConcurrentMap<TKey, TValue> _data;
 
@@ -28,7 +32,7 @@ namespace jbkvs
         static NodePtr create();
         static NodePtr create(const NodePtr& parent, const std::string& name);
 
-        void detach();
+        bool detach();
 
         NodePtr getChild(const std::string& name) const;
 
@@ -64,6 +68,9 @@ namespace jbkvs
     private:
         Node(const NodePtr& parent, const std::string& name);
         ~Node();
+
+        void _onMounting();
+        void _onUnmounted();
     };
 
 } // namespace jbkvs

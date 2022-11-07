@@ -117,6 +117,8 @@ namespace jbkvs
     {
         std::unique_lock lock(_mutex);
 
+        node->_onMounting();
+
         _mountedNodes.emplace_back(node, depth);
 
         for (const auto& [childName, nodeChild] : node->getChildren())
@@ -162,6 +164,8 @@ namespace jbkvs
         }
 
         _mountedNodes.erase(it);
+
+        node->_onUnmounted();
 
         _UnmountResult result = {};
         result.success = true;
