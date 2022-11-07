@@ -52,7 +52,7 @@ namespace jbkvs
 
         ++_virtualMountCounter;
 
-        StorageNodePtr& child = _children[childName];
+        StorageNodePtr& child = _children[std::move(childName)];
         if (!child)
         {
             child = _create();
