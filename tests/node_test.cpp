@@ -87,11 +87,16 @@ TEST(NodeTest, MultipleValueTypesAreSupported)
     double d = 0.00048828125;
     std::string s = "some long long long string"s;
 
+    uint8_t blobData[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    jbkvs::types::BlobPtr blob = jbkvs::types::Blob::create(blobData, std::size(blobData));
+    memset(blobData, 0, sizeof(blobData));
+
     node->put(1u, u32);
     node->put(2u, u64);
     node->put(3u, f);
     node->put(4u, d);
     node->put(5u, s);
+    node->put(6u, blob);
 
     auto u32r = node->get<uint32_t>(1u);
     ASSERT_EQ(!!u32r, true);
@@ -112,6 +117,14 @@ TEST(NodeTest, MultipleValueTypesAreSupported)
     auto sr = node->get<std::string>(5u);
     ASSERT_EQ(!!sr, true);
     EXPECT_EQ(*sr, s);
+
+    auto br = node->get<jbkvs::types::BlobPtr>(6u);
+    ASSERT_EQ(!!br, true);
+    EXPECT_EQ(*br, blob);
+    for (uint8_t i = 0; i < 8; ++i)
+    {
+        EXPECT_EQ((*br)->data()[i], i);
+    }
 }
 
 TEST(NodeTest, CreationOfMountedNodeChildShoudBeDisallowed)

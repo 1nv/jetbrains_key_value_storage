@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <jbkvs/detail/concurrentMap.h>
+#include <jbkvs/types/blob.h>
 
 namespace jbkvs
 {
@@ -19,7 +20,7 @@ namespace jbkvs
     {
         friend class StorageNode;
 
-        using TValue = std::variant<uint32_t, uint64_t, float, double, std::string>;
+        using TValue = std::variant<uint32_t, uint64_t, float, double, std::string, types::BlobPtr>;
 
         NodeWeakPtr _parent;
         const std::string _name;
