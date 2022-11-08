@@ -149,3 +149,71 @@ TEST(NodeTest, DetachOfMountedNodeShoudBeDisallowed)
     bool detached = child->detach();
     EXPECT_EQ(detached, false);
 }
+
+TEST(NodeTest, GetChildrenWorks)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr child1 = jbkvs::Node::create(root, "1"s);
+    jbkvs::NodePtr child2 = jbkvs::Node::create(root, "2"s);
+    jbkvs::NodePtr child3 = jbkvs::Node::create(root, "3"s);
+
+    const auto& children = root->getChildren();
+    auto c1 = children.get("1"s);
+    auto c2 = children.get("2"s);
+    auto c3 = children.get("3"s);
+
+    ASSERT_EQ(!!c1, true);
+    ASSERT_EQ(!!c2, true);
+    ASSERT_EQ(!!c3, true);
+
+    EXPECT_EQ(*c1, child1);
+    EXPECT_EQ(*c2, child2);
+    EXPECT_EQ(*c3, child3);
+}
+
+static std::string _bigString = std::string(1024, 'a');
+
+static void _createLargeVolumeChildren(const jbkvs::NodePtr& node, size_t depth, size_t count, size_t maxDepth)
+{
+    for (size_t i = 0; i < count; ++i)
+    {
+        if (depth < maxDepth)
+        {
+            jbkvs::NodePtr child = jbkvs::Node::create(node, std::to_string(i));
+            _createLargeVolumeChildren(child, depth + 1, count, maxDepth);
+        }
+        else
+        {
+            node->put(123u, _bigString);
+        }
+    }
+}
+
+static void _verifyLargeVolumeChildren(const jbkvs::NodePtr& node, size_t depth, size_t count, size_t maxDepth)
+{
+    const auto& children = node->getChildren();
+
+    if (depth == maxDepth)
+    {
+        ASSERT_EQ(children.size(), 0);
+        auto s = node->get<std::string>(123u);
+        ASSERT_EQ(!!s, true);
+        ASSERT_EQ(*s, _bigString);
+    }
+    else
+    {
+        ASSERT_EQ(children.size(), count);
+        for (const auto& [childName, child] : children)
+        {
+            _verifyLargeVolumeChildren(child, depth + 1, count, maxDepth);
+        }
+    }
+}
+
+TEST(NodeTest, LargeVolumesAreSupported)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+
+    _createLargeVolumeChildren(root, 0, 10, 6);
+    _verifyLargeVolumeChildren(root, 0, 10, 6);
+}

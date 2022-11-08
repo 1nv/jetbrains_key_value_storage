@@ -127,3 +127,31 @@ TEST(ConcurrentMapTest, ConcurrentPutWorksWithCollidingKeys)
         EXPECT_EQ(*got, data);
     }
 }
+
+TEST(ConcurrentMapTest, RemoveWorks)
+{
+    jbkvs::detail::ConcurrentMap<uint32_t, std::string> map;
+
+    map.put(123u, "data1"s);
+    map.put(456u, "data2"s);
+
+    map.remove(123u);
+
+    EXPECT_EQ(!!map.get(123u), false);
+    EXPECT_EQ(!!map.get(456u), true);
+    EXPECT_EQ(map.size(), 1);
+}
+
+TEST(ConcurrentMapTest, ClearWorks)
+{
+    jbkvs::detail::ConcurrentMap<uint32_t, std::string> map;
+
+    map.put(123u, "data1"s);
+    map.put(456u, "data2"s);
+
+    map.clear();
+
+    EXPECT_EQ(!!map.get(123u), false);
+    EXPECT_EQ(!!map.get(456u), false);
+    EXPECT_EQ(map.size(), 0);
+}
