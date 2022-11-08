@@ -67,7 +67,7 @@ namespace jbkvs
         void _mount(const NodePtr& node, size_t depth);
         _UnmountResult _unmount(const NodePtr& node, size_t depth);
 
-        bool _isReadyForDetach() const;
+        bool _isReadyForDetach() const noexcept;
     };
 
 } // namespace jbkvs

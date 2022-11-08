@@ -61,7 +61,7 @@ namespace jbkvs
             return _data.remove(key);
         }
 
-        const detail::ConcurrentMap<std::string, NodePtr>& getChildren() const
+        const detail::ConcurrentMap<std::string, NodePtr>& getChildren() const noexcept
         {
             return _children;
         }

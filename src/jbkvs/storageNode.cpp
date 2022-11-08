@@ -178,7 +178,7 @@ namespace jbkvs
         return result;
     }
 
-    bool StorageNode::_isReadyForDetach() const
+    bool StorageNode::_isReadyForDetach() const noexcept
     {
         return _virtualMountCounter == 0 && _mountedNodes.empty();
     }

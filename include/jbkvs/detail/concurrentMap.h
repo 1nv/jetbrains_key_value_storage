@@ -22,11 +22,11 @@ namespace jbkvs::detail
         {
         }
 
-        ~SharedMutexMap() noexcept
+        ~SharedMutexMap()
         {
         }
 
-        std::optional<TValue> get(const TKey& key) const noexcept
+        std::optional<TValue> get(const TKey& key) const
         {
             std::shared_lock lock(_mutex);
 
@@ -34,21 +34,21 @@ namespace jbkvs::detail
             return it != _map.end() ? it->second : std::optional<TValue>();
         }
 
-        void put(const TKey& key, const TValue& value) noexcept
+        void put(const TKey& key, const TValue& value)
         {
             std::unique_lock lock(_mutex);
 
             _map[key] = value;
         }
 
-        void put(const TKey& key, TValue&& value) noexcept
+        void put(const TKey& key, TValue&& value)
         {
             std::unique_lock lock(_mutex);
 
             _map[key] = std::move(value);
         }
 
-        bool remove(const TKey& key) noexcept
+        bool remove(const TKey& key)
         {
             std::unique_lock lock(_mutex);
 
@@ -56,14 +56,14 @@ namespace jbkvs::detail
             return result;
         }
 
-        void clear() noexcept
+        void clear()
         {
             std::unique_lock lock(_mutex);
 
             _map.clear();
         }
 
-        size_t size() const noexcept
+        size_t size() const
         {
             std::shared_lock lock(_mutex);
 
@@ -93,18 +93,18 @@ namespace jbkvs::detail
             {
             }
 
-            const std::pair<const TKey, TValue>& operator*() const
+            const std::pair<const TKey, TValue>& operator*() const noexcept
             {
                 return *_it;
             }
 
-            ConstIterator& operator++()
+            ConstIterator& operator++() noexcept
             {
                 ++_it;
                 return *this;
             }
 
-            bool operator!=(const ConstIteratorEndTag& endTag) const
+            bool operator!=(const ConstIteratorEndTag& endTag) const noexcept
             {
                 return _it != _endIt;
             }

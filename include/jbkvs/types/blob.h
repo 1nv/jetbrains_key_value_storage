@@ -17,12 +17,12 @@ namespace jbkvs::types
     public:
         static BlobPtr create(const uint8_t* data, size_t size);
 
-        const uint8_t* data() const { return _data; }
-        size_t size() const { return _size; }
+        const uint8_t* data() const noexcept { return _data; }
+        size_t size() const noexcept { return _size; }
 
     private:
-        Blob(const uint8_t* data, size_t size);
-        ~Blob();
+        Blob(const uint8_t* data, size_t size) noexcept;
+        ~Blob() noexcept;
     };
 
 } // namespace jbkvs::types

@@ -27,13 +27,13 @@ namespace jbkvs::types
         return blob;
     }
 
-    Blob::Blob(const uint8_t* data, size_t size)
+    Blob::Blob(const uint8_t* data, size_t size) noexcept
         : _data(data)
         , _size(size)
     {
     }
 
-    Blob::~Blob()
+    Blob::~Blob() noexcept
     {
         delete[] _data;
     }
