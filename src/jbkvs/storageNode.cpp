@@ -1,6 +1,7 @@
 #include <jbkvs/storageNode.h>
 
 #include <assert.h>
+#include <algorithm>
 
 namespace jbkvs
 {

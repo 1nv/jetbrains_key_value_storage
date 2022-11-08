@@ -1,5 +1,7 @@
 #include <jbkvs/types/blob.h>
 
+#include <string.h>
+
 namespace jbkvs::types
 {
 
