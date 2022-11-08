@@ -4,6 +4,7 @@ project("JBKVS" LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
 add_library(jbkvs
+ src/jbkvs/types/blob.cpp
  src/jbkvs/node.cpp
  src/jbkvs/storage.cpp
  src/jbkvs/storageNode.cpp
