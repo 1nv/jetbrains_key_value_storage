@@ -336,6 +336,45 @@ TEST(StorageTest, CollidingDataWithTheSameTypeFromMultipleNodesIsRetrievedFromTh
     EXPECT_EQ(*data, "data2"s);
 }
 
+TEST(StorageTest, CollidingDataWithDifferentTypesFromMultipleNodesIsMerged)
+{
+    jbkvs::NodePtr root1 = jbkvs::Node::create();
+    jbkvs::NodePtr child1 = jbkvs::Node::create(root1, "foo"s);
+    child1->put(123u, "data1"s);
+
+    jbkvs::NodePtr root2 = jbkvs::Node::create();
+    jbkvs::NodePtr child2 = jbkvs::Node::create(root2, "foo"s);
+    child2->put(123u, 2u);
+
+    jbkvs::NodePtr root3 = jbkvs::Node::create();
+    root3->put(123u, 3.0f);
+
+
+    jbkvs::Storage storage;
+    bool mounted;
+    mounted = storage.mount("/"s, root1);
+    ASSERT_EQ(mounted, true);
+    mounted = storage.mount("/"s, root2);
+    ASSERT_EQ(mounted, true);
+    mounted = storage.mount("/foo"s, root3);
+    ASSERT_EQ(mounted, true);
+
+    jbkvs::StorageNodePtr storageNode = storage.getNode("/foo"s);
+    ASSERT_EQ(!!storageNode, true);
+
+    auto data1 = storageNode->get<std::string>(123u);
+    ASSERT_EQ(!!data1, true);
+    EXPECT_EQ(*data1, "data1"s);
+
+    auto data2 = storageNode->get<uint32_t>(123u);
+    ASSERT_EQ(!!data2, true);
+    EXPECT_EQ(*data2, 2u);
+
+    auto data3 = storageNode->get<float>(123u);
+    ASSERT_EQ(!!data3, true);
+    EXPECT_EQ(*data3, 3.0f);
+}
+
 TEST(StorageTest, DoubleMountingAndUnmountingSameNodePrioritizesLastMountedNode)
 {
     jbkvs::NodePtr root1 = jbkvs::Node::create();
