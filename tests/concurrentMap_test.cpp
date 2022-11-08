@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
-#include <jbkvs/detail/concurrentMap.h>
+
 #include <string>
 #include <future>
+
+#include <jbkvs/detail/concurrentMap.h>
 
 using namespace std::literals::string_literals;
 

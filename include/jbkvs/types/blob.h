@@ -1,7 +1,8 @@
 #pragma once
 
-#include <jbkvs/detail/mixins.h>
 #include <memory>
+
+#include <jbkvs/detail/mixins.h>
 
 namespace jbkvs::types
 {

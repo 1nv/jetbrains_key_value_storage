@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <jbkvs/storage.h>
 
 using namespace std::literals::string_literals;
