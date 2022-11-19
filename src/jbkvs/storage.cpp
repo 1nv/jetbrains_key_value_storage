@@ -46,7 +46,7 @@ namespace jbkvs
         return unmountResult.success;
     }
 
-    StorageNodePtr Storage::getNode(const std::string& path) const
+    StorageNodePtr Storage::getNode(const std::string_view& path) const
     {
         if (path.empty() || path[0] != StorageNode::_pathSeparator)
         {

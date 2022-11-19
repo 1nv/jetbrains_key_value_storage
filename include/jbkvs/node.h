@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <variant>
-#include <string>
+#include <string_view>
 #include <memory>
 
 #include <jbkvs/detail/concurrentMap.h>
@@ -35,7 +35,7 @@ namespace jbkvs
 
         bool detach();
 
-        NodePtr getChild(const std::string& name) const;
+        NodePtr getChild(const std::string_view& name) const;
 
         template <typename T>
         std::optional<T> get(const TKey& key) const

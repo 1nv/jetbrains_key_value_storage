@@ -14,7 +14,7 @@ namespace jbkvs::detail
         : public NonCopyableMixin<SharedMutexMap<TKey, TValue>>
     {
         mutable std::shared_mutex _mutex;
-        std::map<TKey, TValue> _map;
+        std::map<TKey, TValue, std::less<>> _map;
     public:
         SharedMutexMap() noexcept
             : _mutex()
@@ -26,11 +26,12 @@ namespace jbkvs::detail
         {
         }
 
-        std::optional<TValue> get(const TKey& key) const
+        template <typename TCustomKey>
+        std::optional<TValue> get(TCustomKey&& key) const
         {
             std::shared_lock lock(_mutex);
 
-            auto it = _map.find(key);
+            auto it = _map.find(std::forward<TCustomKey>(key));
             return it != _map.end() ? it->second : std::optional<TValue>();
         }
 

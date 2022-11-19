@@ -17,7 +17,7 @@ namespace jbkvs
         bool mount(const std::string& path, const NodePtr& node);
         bool unmount(const std::string& path, const NodePtr& node);
 
-        StorageNodePtr getNode(const std::string& path) const;
+        StorageNodePtr getNode(const std::string_view& path) const;
     };
 
 } // namespace jbkvs

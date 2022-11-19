@@ -77,7 +77,7 @@ namespace jbkvs
         }
     }
 
-    NodePtr Node::getChild(const std::string& name) const
+    NodePtr Node::getChild(const std::string_view& name) const
     {
         std::optional<NodePtr> optionalPtr = _children.get(name);
         return optionalPtr ? *optionalPtr : NodePtr();
