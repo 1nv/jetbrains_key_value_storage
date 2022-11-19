@@ -62,10 +62,11 @@ namespace jbkvs
 
         StorageNodePtr current = _root;
 
-        size_t start = 1;
-        size_t end = path.find(StorageNode::_pathSeparator, start);
-        while (true)
+        size_t end;
+        for (size_t start = 1; start < length; start = end + 1)
         {
+            end = path.find(StorageNode::_pathSeparator, start);
+
             if (end == std::string::npos)
             {
                 end = length;
@@ -76,14 +77,6 @@ namespace jbkvs
             {
                 return StorageNodePtr();
             }
-
-            if (end >= length - 1)
-            {
-                break;
-            }
-
-            start = end + 1;
-            end = path.find(StorageNode::_pathSeparator, start);
         }
 
         return current;
