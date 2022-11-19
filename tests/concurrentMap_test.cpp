@@ -101,14 +101,14 @@ TEST(ConcurrentMapTest, ConcurrentPutWorksWithCollidingKeys)
     for (size_t threadIndex = 0; threadIndex < std::size(threads); ++threadIndex)
     {
         threads[threadIndex] = std::thread([&map, itemsToBeWrittenByOneThread, &data, barrierFuture]()
-            {
-                barrierFuture.wait();
+        {
+            barrierFuture.wait();
 
-                for (uint32_t i = 0; i < itemsToBeWrittenByOneThread; ++i)
-                {
-                    map.put(i, data);
-                }
-            });
+            for (uint32_t i = 0; i < itemsToBeWrittenByOneThread; ++i)
+            {
+                map.put(i, data);
+            }
+        });
     }
 
     barrierPromise.set_value();
