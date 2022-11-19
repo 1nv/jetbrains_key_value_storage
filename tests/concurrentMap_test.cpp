@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <string>
-#include <future>
+#include <thread>
+#include <immintrin.h>
 
 #include <jbkvs/detail/concurrentMap.h>
 
@@ -44,6 +45,26 @@ TEST(ConcurrentMapTest, GetAfterPutReturnsSameData)
     EXPECT_EQ(*gotRaw, std::string(dataRaw));
 }
 
+class SimpleLatch
+{
+    std::atomic<std::ptrdiff_t> _counter;
+
+public:
+    explicit SimpleLatch(std::ptrdiff_t counter)
+        : _counter(counter)
+    {
+    }
+
+    void arrive_and_wait()
+    {
+        --_counter;
+        while (_counter.load(std::memory_order_relaxed))
+        {
+            _mm_pause();
+        }
+    }
+};
+
 TEST(ConcurrentMapTest, ConcurrentPutWorksWithSeparateKeys)
 {
     jbkvs::detail::ConcurrentMap<uint32_t, std::string> map;
@@ -51,15 +72,14 @@ TEST(ConcurrentMapTest, ConcurrentPutWorksWithSeparateKeys)
     const size_t itemsToBeWrittenByOneThread = 1000;
     const std::string data = "dummy"s;
 
-    std::promise<void> barrierPromise;
-    std::shared_future<void> barrierFuture = barrierPromise.get_future().share();
-
     std::thread threads[4];
+    SimpleLatch latch(std::size(threads));
+
     for (size_t threadIndex = 0; threadIndex < std::size(threads); ++threadIndex)
     {
-        threads[threadIndex] = std::thread([&map, itemsToBeWrittenByOneThread, &data, threadIndex, barrierFuture]()
+        threads[threadIndex] = std::thread([&map, itemsToBeWrittenByOneThread, &data, threadIndex, &latch]()
         {
-            barrierFuture.wait();
+            latch.arrive_and_wait();
 
             for (uint32_t i = threadIndex * itemsToBeWrittenByOneThread; i < (threadIndex + 1) * itemsToBeWrittenByOneThread; ++i)
             {
@@ -67,8 +87,6 @@ TEST(ConcurrentMapTest, ConcurrentPutWorksWithSeparateKeys)
             }
         });
     }
-
-    barrierPromise.set_value();
 
     for (size_t threadIndex = 0; threadIndex < std::size(threads); ++threadIndex)
     {
@@ -94,15 +112,14 @@ TEST(ConcurrentMapTest, ConcurrentPutWorksWithCollidingKeys)
     const size_t itemsToBeWrittenByOneThread = 1000;
     const std::string data = "dummy"s;
 
-    std::promise<void> barrierPromise;
-    std::shared_future<void> barrierFuture = barrierPromise.get_future().share();
-
     std::thread threads[4];
+    SimpleLatch latch(std::size(threads));
+
     for (size_t threadIndex = 0; threadIndex < std::size(threads); ++threadIndex)
     {
-        threads[threadIndex] = std::thread([&map, itemsToBeWrittenByOneThread, &data, barrierFuture]()
+        threads[threadIndex] = std::thread([&map, itemsToBeWrittenByOneThread, &data, &latch]()
         {
-            barrierFuture.wait();
+            latch.arrive_and_wait();
 
             for (uint32_t i = 0; i < itemsToBeWrittenByOneThread; ++i)
             {
@@ -110,8 +127,6 @@ TEST(ConcurrentMapTest, ConcurrentPutWorksWithCollidingKeys)
             }
         });
     }
-
-    barrierPromise.set_value();
 
     for (size_t threadIndex = 0; threadIndex < std::size(threads); ++threadIndex)
     {
