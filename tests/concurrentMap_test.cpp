@@ -61,7 +61,7 @@ TEST(ConcurrentMapTest, ConcurrentPutWorksWithSeparateKeys)
         {
             barrierFuture.wait();
 
-            for (size_t i = threadIndex * itemsToBeWrittenByOneThread; i < (threadIndex + 1) * itemsToBeWrittenByOneThread; ++i)
+            for (uint32_t i = threadIndex * itemsToBeWrittenByOneThread; i < (threadIndex + 1) * itemsToBeWrittenByOneThread; ++i)
             {
                 map.put(i, data);
             }
@@ -104,7 +104,7 @@ TEST(ConcurrentMapTest, ConcurrentPutWorksWithCollidingKeys)
             {
                 barrierFuture.wait();
 
-                for (size_t i = 0; i < itemsToBeWrittenByOneThread; ++i)
+                for (uint32_t i = 0; i < itemsToBeWrittenByOneThread; ++i)
                 {
                     map.put(i, data);
                 }
