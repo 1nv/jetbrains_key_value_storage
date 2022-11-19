@@ -17,6 +17,7 @@ namespace jbkvs::types
 
     public:
         static BlobPtr create(const uint8_t* data, size_t size);
+        static BlobPtr create(std::unique_ptr<const uint8_t[]>&& data, size_t size);
 
         const uint8_t* data() const noexcept { return _data.get(); }
         size_t size() const noexcept { return _size; }

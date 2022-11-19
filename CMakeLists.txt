@@ -14,6 +14,7 @@ target_include_directories(jbkvs PUBLIC include)
 enable_testing()
 add_subdirectory(thirdparty/googletest)
 add_executable(jbkvs_test
+ tests/blob_test.cpp
  tests/concurrentMap_test.cpp
  tests/node_test.cpp
  tests/storage_test.cpp

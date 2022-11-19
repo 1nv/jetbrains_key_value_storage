@@ -10,6 +10,12 @@ namespace jbkvs::types
         std::unique_ptr<uint8_t[]> dataCopy = std::unique_ptr<uint8_t[]>(new uint8_t[size]); // TODO: C++20: replace with std::make_unique_for_overwrite().
         memcpy(dataCopy.get(), data, size * sizeof(uint8_t));
 
+        BlobPtr blob = create(std::move(dataCopy), size);
+        return blob;
+    }
+
+    BlobPtr Blob::create(std::unique_ptr<const uint8_t[]>&& data, size_t size)
+    {
         struct MakeSharedEnabledBlob : public Blob
         {
             MakeSharedEnabledBlob(std::unique_ptr<const uint8_t[]>&& data, size_t size)
@@ -18,7 +24,7 @@ namespace jbkvs::types
             }
         };
 
-        BlobPtr blob = std::make_shared<MakeSharedEnabledBlob>(std::move(dataCopy), size);
+        BlobPtr blob = std::make_shared<MakeSharedEnabledBlob>(std::move(data), size);
         return blob;
     }
 
