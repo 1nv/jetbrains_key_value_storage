@@ -13,34 +13,34 @@ TEST(NodeTest, EmptyNodeCanBeCreated)
 TEST(NodeTest, SimpleNodeHierarchyCanBeCreated)
 {
     jbkvs::NodePtr root = jbkvs::Node::create();
-    jbkvs::NodePtr childA = jbkvs::Node::create(root, "A"s);
-    jbkvs::NodePtr childB = jbkvs::Node::create(root, "B"s);
-    jbkvs::NodePtr subChildA1 = jbkvs::Node::create(childA, "1"s);
+    jbkvs::NodePtr childA = jbkvs::Node::create(root, "A");
+    jbkvs::NodePtr childB = jbkvs::Node::create(root, "B");
+    jbkvs::NodePtr subChildA1 = jbkvs::Node::create(childA, "1");
 
-    EXPECT_EQ(root->getChild("A"s), childA);
-    EXPECT_EQ(root->getChild("B"s), childB);
-    EXPECT_EQ(childA->getChild("1"s), subChildA1);
+    EXPECT_EQ(root->getChild("A"), childA);
+    EXPECT_EQ(root->getChild("B"), childB);
+    EXPECT_EQ(childA->getChild("1"), subChildA1);
 }
 
 TEST(NodeTest, GetChildReturnsOnlyExistingChildren)
 {
     jbkvs::NodePtr root = jbkvs::Node::create();
-    jbkvs::NodePtr childA = jbkvs::Node::create(root, "A"s);
-    jbkvs::NodePtr childB = jbkvs::Node::create(root, "B"s);
+    jbkvs::NodePtr childA = jbkvs::Node::create(root, "A");
+    jbkvs::NodePtr childB = jbkvs::Node::create(root, "B");
 
-    EXPECT_EQ(root->getChild("A"s), childA);
-    EXPECT_EQ(root->getChild("B"s), childB);
-    EXPECT_EQ(root->getChild("C"s), jbkvs::NodePtr());
+    EXPECT_EQ(root->getChild("A"), childA);
+    EXPECT_EQ(root->getChild("B"), childB);
+    EXPECT_EQ(root->getChild("C"), jbkvs::NodePtr());
 }
 
 TEST(NodeTest, DetachRemovesNodeFromParent)
 {
     jbkvs::NodePtr root = jbkvs::Node::create();
-    jbkvs::NodePtr child = jbkvs::Node::create(root, "A"s);
+    jbkvs::NodePtr child = jbkvs::Node::create(root, "A");
     bool detached = child->detach();
 
     ASSERT_EQ(detached, true);
-    EXPECT_EQ(root->getChild("A"s), jbkvs::NodePtr());
+    EXPECT_EQ(root->getChild("A"), jbkvs::NodePtr());
 }
 
 TEST(NodeTest, DetachOnRootShouldNotWork)
@@ -133,19 +133,19 @@ TEST(NodeTest, CreationOfMountedNodeChildShoudBeDisallowed)
     jbkvs::NodePtr node = jbkvs::Node::create();
 
     jbkvs::Storage storage;
-    storage.mount("/"s, node);
+    storage.mount("/", node);
 
-    jbkvs::NodePtr child = jbkvs::Node::create(node, "test"s);
+    jbkvs::NodePtr child = jbkvs::Node::create(node, "test");
     EXPECT_EQ(!!child, false);
 }
 
 TEST(NodeTest, DetachOfMountedNodeShoudBeDisallowed)
 {
     jbkvs::NodePtr node = jbkvs::Node::create();
-    jbkvs::NodePtr child = jbkvs::Node::create(node, "test"s);
+    jbkvs::NodePtr child = jbkvs::Node::create(node, "test");
 
     jbkvs::Storage storage;
-    storage.mount("/"s, node);
+    storage.mount("/", node);
 
     bool detached = child->detach();
     EXPECT_EQ(detached, false);
@@ -154,14 +154,14 @@ TEST(NodeTest, DetachOfMountedNodeShoudBeDisallowed)
 TEST(NodeTest, GetChildrenWorks)
 {
     jbkvs::NodePtr root = jbkvs::Node::create();
-    jbkvs::NodePtr child1 = jbkvs::Node::create(root, "1"s);
-    jbkvs::NodePtr child2 = jbkvs::Node::create(root, "2"s);
-    jbkvs::NodePtr child3 = jbkvs::Node::create(root, "3"s);
+    jbkvs::NodePtr child1 = jbkvs::Node::create(root, "1");
+    jbkvs::NodePtr child2 = jbkvs::Node::create(root, "2");
+    jbkvs::NodePtr child3 = jbkvs::Node::create(root, "3");
 
     const auto& children = root->getChildren();
-    auto c1 = children.get("1"s);
-    auto c2 = children.get("2"s);
-    auto c3 = children.get("3"s);
+    auto c1 = children.get("1");
+    auto c2 = children.get("2");
+    auto c3 = children.get("3");
 
     ASSERT_EQ(!!c1, true);
     ASSERT_EQ(!!c2, true);
