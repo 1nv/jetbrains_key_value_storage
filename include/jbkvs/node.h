@@ -31,7 +31,7 @@ namespace jbkvs
 
     public:
         static NodePtr create();
-        static NodePtr create(const NodePtr& parent, const std::string& name);
+        static NodePtr create(const NodePtr& parent, const std::string_view& name);
 
         bool detach();
 
@@ -67,7 +67,7 @@ namespace jbkvs
         }
 
     private:
-        Node(const NodePtr& parent, const std::string& name);
+        Node(const NodePtr& parent, std::string&& name);
         ~Node();
 
         void _onMounting();

@@ -14,8 +14,8 @@ namespace jbkvs
         Storage();
         ~Storage();
 
-        bool mount(const std::string& path, const NodePtr& node);
-        bool unmount(const std::string& path, const NodePtr& node);
+        bool mount(const std::string_view& path, const NodePtr& node);
+        bool unmount(const std::string_view& path, const NodePtr& node);
 
         StorageNodePtr getNode(const std::string_view& path) const;
     };

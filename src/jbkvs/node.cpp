@@ -10,12 +10,12 @@ namespace jbkvs
         return create({}, {});
     }
 
-    NodePtr Node::create(const NodePtr& parent, const std::string& name)
+    NodePtr Node::create(const NodePtr& parent, const std::string_view& name)
     {
         struct MakeSharedEnabledNode : public Node
         {
-            MakeSharedEnabledNode(const NodePtr& parent, const std::string& name)
-                : Node(parent, name)
+            MakeSharedEnabledNode(const NodePtr& parent, std::string&& name)
+                : Node(parent, std::move(name))
             {
             }
         };
@@ -29,20 +29,20 @@ namespace jbkvs
                 return NodePtr();
             }
 
-            NodePtr newNode = std::make_shared<MakeSharedEnabledNode>(parent, name);
-            parent->_children.put(name, newNode);
+            NodePtr newNode = std::make_shared<MakeSharedEnabledNode>(parent, std::string(name));
+            parent->_children.put(newNode->_name, newNode);
             return newNode;
         }
         else
         {
-            NodePtr newNode = std::make_shared<MakeSharedEnabledNode>(parent, name);
+            NodePtr newNode = std::make_shared<MakeSharedEnabledNode>(parent, std::string(name));
             return newNode;
         }
     }
 
-    Node::Node(const NodePtr& parent, const std::string& name)
+    Node::Node(const NodePtr& parent, std::string&& name)
         : _parent(parent)
-        , _name(name)
+        , _name(std::move(name))
         , _mountMutex()
         , _mountCounter()
         , _children()

@@ -12,7 +12,7 @@ namespace jbkvs
     {
     }
 
-    bool Storage::mount(const std::string& path, const NodePtr& node)
+    bool Storage::mount(const std::string_view& path, const NodePtr& node)
     {
         if (path.empty() || path[0] != StorageNode::_pathSeparator)
         {
@@ -24,13 +24,11 @@ namespace jbkvs
             return false;
         }
 
-        std::string_view pathView = path;
-
-        _root->_mountVirtual(pathView.substr(1), node);
+        _root->_mountVirtual(path.substr(1), node);
         return true;
     }
 
-    bool Storage::unmount(const std::string& path, const NodePtr& node)
+    bool Storage::unmount(const std::string_view& path, const NodePtr& node)
     {
         if (path.empty() || path[0] != StorageNode::_pathSeparator)
         {
