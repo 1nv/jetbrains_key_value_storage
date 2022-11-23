@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
+#include "testUtils.h"
 
 #include <string>
 #include <thread>
-#include <immintrin.h>
 
 #include <jbkvs/detail/concurrentMap.h>
 
@@ -44,26 +44,6 @@ TEST(ConcurrentMapTest, GetAfterPutReturnsSameData)
     EXPECT_EQ(*gotStr, dataStr);
     EXPECT_EQ(*gotRaw, std::string(dataRaw));
 }
-
-class SimpleLatch
-{
-    std::atomic<std::ptrdiff_t> _counter;
-
-public:
-    explicit SimpleLatch(std::ptrdiff_t counter)
-        : _counter(counter)
-    {
-    }
-
-    void arrive_and_wait()
-    {
-        --_counter;
-        while (_counter.load(std::memory_order_relaxed))
-        {
-            _mm_pause();
-        }
-    }
-};
 
 TEST(ConcurrentMapTest, ConcurrentPutWorksWithSeparateKeys)
 {
