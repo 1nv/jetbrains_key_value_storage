@@ -1,6 +1,7 @@
 #include <jbkvs/storage.h>
 
 #include <algorithm>
+#include <iterator>
 
 namespace jbkvs
 {
@@ -124,6 +125,16 @@ namespace jbkvs
         }
 
         return current;
+    }
+
+    std::vector<Storage::MountPoint> Storage::getMountPoints() const
+    {
+        std::shared_lock lock(_mutex);
+
+        std::vector<Storage::MountPoint> result;
+        result.reserve(_mountPoints.size());
+        std::copy(_mountPoints.begin(), _mountPoints.end(), std::back_inserter(result));
+        return result;
     }
 
 } // namespace jbkvs

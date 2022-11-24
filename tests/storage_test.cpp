@@ -679,3 +679,29 @@ TEST(StorageTest, DestructionOfStorageWithMountedNodesWorks)
     detached = child2->detach();
     ASSERT_EQ(detached, true);
 }
+
+TEST(StorageTest, GetMountPointsWorks)
+{
+    jbkvs::NodePtr root1 = jbkvs::Node::create();
+    jbkvs::NodePtr root2 = jbkvs::Node::create();
+
+    jbkvs::Storage storage;
+    storage.mount("/", root1);
+    storage.mount("/", root2);
+    storage.mount("/", root1);
+    storage.mount("/foo", root2);
+    storage.mount("/bar", root1);
+    storage.unmount("/foo", root2);
+
+    auto mountPoints = storage.getMountPoints();
+    ASSERT_EQ(mountPoints.size(), 4);
+
+    EXPECT_EQ(mountPoints[0].path, "/"s);
+    EXPECT_EQ(mountPoints[0].node, root1);
+    EXPECT_EQ(mountPoints[1].path, "/"s);
+    EXPECT_EQ(mountPoints[1].node, root2);
+    EXPECT_EQ(mountPoints[2].path, "/"s);
+    EXPECT_EQ(mountPoints[2].node, root1);
+    EXPECT_EQ(mountPoints[3].path, "/bar"s);
+    EXPECT_EQ(mountPoints[3].node, root1);
+}

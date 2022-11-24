@@ -11,6 +11,7 @@ namespace jbkvs
     class Storage
         : detail::NonCopyableMixin<Storage>
     {
+    public:
         struct MountPoint
         {
             std::string path;
@@ -19,7 +20,8 @@ namespace jbkvs
             MountPoint(const std::string_view& path, const NodePtr& node) : path(path), node(node) {}
         };
 
-        std::mutex _mutex;
+    private:
+        mutable std::shared_mutex _mutex;
         uint32_t _mountPriorityCounter;
         std::list<MountPoint> _mountPoints;
         StorageNodePtr _root;
@@ -32,6 +34,7 @@ namespace jbkvs
         bool unmount(const std::string_view& path, const NodePtr& node);
 
         StorageNodePtr getNode(const std::string_view& path) const;
+        std::vector<MountPoint> getMountPoints() const;
 
     private:
         void _mount(const std::string_view& path, const NodePtr& node, uint32_t priority);
