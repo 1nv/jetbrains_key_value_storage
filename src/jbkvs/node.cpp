@@ -84,8 +84,14 @@ namespace jbkvs
 
     bool Node::detach()
     {
-        NodePtr parent = _parent.lock();
-        _parent.reset();
+        NodePtr parent;
+
+        {
+            std::unique_lock lock(_mutex);
+            parent = _parent.lock();
+            _parent.reset();
+        }
+
         if (parent)
         {
             bool detached = parent->_detachChild(_name);
