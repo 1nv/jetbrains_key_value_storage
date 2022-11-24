@@ -658,3 +658,24 @@ TEST(StorageTest, ConcurrentOperationsWork)
     jbkvs::StorageNodePtr storageNode = storage.getNode("/test");
     ASSERT_EQ(!!storageNode, false);
 }
+
+TEST(StorageTest, DestructionOfStorageWithMountedNodesWorks)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr child1 = jbkvs::Node::create(root, "child1");
+    jbkvs::NodePtr child2 = jbkvs::Node::create(root, "child2");
+    jbkvs::NodePtr subChild1 = jbkvs::Node::create(child1, "subChild1");
+    jbkvs::NodePtr subChild2 = jbkvs::Node::create(child2, "subChild2");
+
+    {
+        jbkvs::Storage storage;
+        storage.mount("/", root);
+        storage.mount("/test", subChild2);
+    }
+
+    bool detached;
+    detached = child1->detach();
+    ASSERT_EQ(detached, true);
+    detached = child2->detach();
+    ASSERT_EQ(detached, true);
+}

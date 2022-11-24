@@ -1,5 +1,7 @@
 #include <jbkvs/storage.h>
 
+#include <algorithm>
+
 namespace jbkvs
 {
 
@@ -11,6 +13,12 @@ namespace jbkvs
 
     Storage::~Storage()
     {
+        std::unique_lock lock(_mutex);
+
+        while (!_mountPoints.empty())
+        {
+            _unmount(_mountPoints.rbegin());
+        }
     }
 
     bool Storage::mount(const std::string_view& path, const NodePtr& node)
@@ -25,12 +33,21 @@ namespace jbkvs
             return false;
         }
 
-        uint32_t priority = ++_mountPriorityCounter;
+        std::unique_lock lock(_mutex);
 
+        uint32_t priority = ++_mountPriorityCounter;
+        _mount(path, node, priority);
+
+        return true;
+    }
+
+    void Storage::_mount(const std::string_view& path, const NodePtr& node, uint32_t priority)
+    {
         detail::SubTreeLock subTreeLock(node);
 
         _root->_mountVirtual(path.substr(1), node, priority);
-        return true;
+
+        _mountPoints.emplace_back(path, node);
     }
 
     bool Storage::unmount(const std::string_view& path, const NodePtr& node)
@@ -45,9 +62,31 @@ namespace jbkvs
             return false;
         }
 
-        detail::SubTreeLock subTreeLock(node);
+        std::unique_lock lock(_mutex);
 
-        StorageNode::_UnmountResult unmountResult = _root->_unmountVirtual(path.substr(1), node);
+        auto it = std::find_if(_mountPoints.rbegin(), _mountPoints.rend(), [&path, &node](const MountPoint& mountPoint)
+        {
+            return mountPoint.path == path && mountPoint.node == node;
+        });
+
+        if (it == _mountPoints.rend())
+        {
+            return false;
+        }
+
+        bool result = _unmount(it);
+        return result;
+    }
+
+    bool Storage::_unmount(const decltype(_mountPoints)::reverse_iterator& it)
+    {
+        MountPoint mountPoint = std::move(*it);
+
+        _mountPoints.erase(std::next(it).base());
+
+        detail::SubTreeLock subTreeLock(mountPoint.node);
+
+        StorageNode::_UnmountResult unmountResult = _root->_unmountVirtual(std::string_view(mountPoint.path).substr(1), mountPoint.node);
         return unmountResult.success;
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <list>
 
 #include <jbkvs/storageNode.h>
 
@@ -10,7 +11,17 @@ namespace jbkvs
     class Storage
         : detail::NonCopyableMixin<Storage>
     {
-        std::atomic<uint32_t> _mountPriorityCounter;
+        struct MountPoint
+        {
+            std::string path;
+            NodePtr node;
+
+            MountPoint(const std::string_view& path, const NodePtr& node) : path(path), node(node) {}
+        };
+
+        std::mutex _mutex;
+        uint32_t _mountPriorityCounter;
+        std::list<MountPoint> _mountPoints;
         StorageNodePtr _root;
 
     public:
@@ -21,6 +32,10 @@ namespace jbkvs
         bool unmount(const std::string_view& path, const NodePtr& node);
 
         StorageNodePtr getNode(const std::string_view& path) const;
+
+    private:
+        void _mount(const std::string_view& path, const NodePtr& node, uint32_t priority);
+        bool _unmount(const decltype(_mountPoints)::reverse_iterator& it);
     };
 
 } // namespace jbkvs
