@@ -1,4 +1,7 @@
 #include <gtest/gtest.h>
+#include "testUtils.h"
+
+#include <thread>
 
 #include <jbkvs/storage.h>
 
@@ -442,4 +445,216 @@ TEST(StorageTest, PathCanEndWithSeparator)
     data = storageNode->get<std::string>(123u);
     ASSERT_EQ(!!data, true);
     EXPECT_EQ(*data, "data1"s);
+}
+
+TEST(StorageTest, CreationOfMountedNodeChildAddsStorageNodeChild)
+{
+    jbkvs::NodePtr node = jbkvs::Node::create();
+
+    jbkvs::Storage storage;
+    storage.mount("/", node);
+
+    jbkvs::NodePtr child = jbkvs::Node::create(node, "test");
+    ASSERT_EQ(!!child, true);
+    child->put(123u, 1u);
+
+    jbkvs::StorageNodePtr storageNode = storage.getNode("/test");
+    ASSERT_EQ(!!storageNode, true);
+    auto data = storageNode->get<uint32_t>(123u);
+    ASSERT_EQ(!!data, true);
+    ASSERT_EQ(*data, 1u);
+}
+
+TEST(StorageTest, DetachOfMountedNodeRemovesStorageNodeChild)
+{
+    jbkvs::NodePtr node = jbkvs::Node::create();
+    jbkvs::NodePtr child = jbkvs::Node::create(node, "test");
+
+    jbkvs::Storage storage;
+    storage.mount("/", node);
+
+    bool detached = child->detach();
+    ASSERT_EQ(detached, true);
+
+    jbkvs::StorageNodePtr storageNode = storage.getNode("/test");
+    ASSERT_EQ(!!storageNode, false);
+}
+
+TEST(StorageTest, CreationOfMountedNodeChildKeepsMergePriority)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr separate = jbkvs::Node::create();
+    separate->put(123u, "separate"s);
+
+    jbkvs::Storage storageWithRootPriority;
+    storageWithRootPriority.mount("/foo", separate);
+    storageWithRootPriority.mount("/", root);
+
+    jbkvs::Storage storageWithSeparatePriority;
+    storageWithSeparatePriority.mount("/", root);
+    storageWithSeparatePriority.mount("/foo", separate);
+
+    jbkvs::StorageNodePtr rootPriorityNode = storageWithRootPriority.getNode("/foo");
+    jbkvs::StorageNodePtr separatePriorityNode = storageWithSeparatePriority.getNode("/foo");
+
+    std::string data;
+    data = rootPriorityNode->get<std::string>(123u).value();
+    ASSERT_EQ(data, "separate"s);
+    data = separatePriorityNode->get<std::string>(123u).value();
+    ASSERT_EQ(data, "separate"s);
+
+    jbkvs::NodePtr rootChild = jbkvs::Node::create(root, "foo");
+    rootChild->put(123u, "rootChild"s);
+
+    data = rootPriorityNode->get<std::string>(123u).value();
+    ASSERT_EQ(data, "rootChild"s);
+    data = separatePriorityNode->get<std::string>(123u).value();
+    ASSERT_EQ(data, "separate"s);
+}
+
+TEST(StorageTest, DetachOfMountedNodeUpdatesAllAffectedStorageNodes)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr child = jbkvs::Node::create(root, "test");
+    child->put(123u, 1u);
+
+    jbkvs::Storage storage1, storage2;
+    storage1.mount("/", root);
+    storage1.mount("/test", root);
+    storage2.mount("/", root);
+    storage1.mount("/xxx", root);
+
+    bool detached = child->detach();
+    ASSERT_EQ(detached, true);
+
+    jbkvs::StorageNodePtr storageNode;
+
+    storageNode = storage1.getNode("/xxx/test");
+    ASSERT_EQ(!!storageNode, false);
+
+    storageNode = storage2.getNode("/test");
+    ASSERT_EQ(!!storageNode, false);
+
+    storageNode = storage1.getNode("/test/test");
+    ASSERT_EQ(!!storageNode, false);
+
+    storageNode = storage1.getNode("/test");
+    ASSERT_EQ(!!storageNode, true);
+    auto data = storageNode->get<uint32_t>(123u);
+    ASSERT_EQ(!!data, false);
+}
+
+TEST(StorageTest, DetachAndRecreationOfMountedNodeWithSameNameWorks)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr child = jbkvs::Node::create(root, "test");
+    child->put(123u, 1u);
+
+    jbkvs::Storage storage;
+    storage.mount("/", root);
+
+    bool detached = child->detach();
+    ASSERT_EQ(detached, true);
+
+    child = jbkvs::Node::create(root, "test");
+    child->put(123u, 2u);
+
+    jbkvs::StorageNodePtr storageNode = storage.getNode("/test");
+    ASSERT_EQ(!!storageNode, true);
+
+    auto data = storageNode->get<uint32_t>(123u);
+    ASSERT_EQ(!!data, true);
+    ASSERT_EQ(*data, 2u);
+}
+
+TEST(StorageTest, DetachOfMountedTreeRemovesEmptyStorageNodes)
+{
+    jbkvs::NodePtr root1 = jbkvs::Node::create();
+    jbkvs::NodePtr child11 = jbkvs::Node::create(root1, "foo");
+    jbkvs::NodePtr child12 = jbkvs::Node::create(child11, "bar");
+    jbkvs::NodePtr child13 = jbkvs::Node::create(child12, "baz");
+    child11->put(123u, 1u);
+
+    jbkvs::NodePtr root2 = jbkvs::Node::create();
+    jbkvs::NodePtr child21 = jbkvs::Node::create(root2, "foo");
+    child21->put(123u, 2u);
+
+    jbkvs::Storage storage;
+    storage.mount("/root", root1);
+    storage.mount("/root", root2);
+
+    bool detached = child11->detach();
+    ASSERT_EQ(detached, true);
+
+    jbkvs::StorageNodePtr storageNode;
+
+    storageNode = storage.getNode("/root/foo/bar");
+    ASSERT_EQ(!!storageNode, false);
+
+    storageNode = storage.getNode("/root/foo");
+    ASSERT_EQ(!!storageNode, true);
+
+    auto data = storageNode->get<uint32_t>(123u);
+    ASSERT_EQ(!!data, true);
+    ASSERT_EQ(*data, 2u);
+}
+
+TEST(StorageTest, ConcurrentOperationsWork)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+
+    jbkvs::Storage storage;
+    storage.mount("/", root);
+
+    SimpleLatch latch(3);
+
+    std::thread readerThread = std::thread([&latch, &storage]()
+    {
+        latch.arrive_and_wait();
+
+        for (size_t i = 0; i < 1000000; ++i)
+        {
+            jbkvs::StorageNodePtr storageNode1 = storage.getNode("/test");
+            jbkvs::StorageNodePtr storageNode2 = storage.getNode("/test/test");
+            jbkvs::StorageNodePtr storageNode3 = storage.getNode("/test/test/test");
+        }
+    });
+
+    std::thread mounterThread = std::thread([&latch, &root, &storage]()
+    {
+        latch.arrive_and_wait();
+
+        for (size_t i = 0; i < 100; ++i)
+        {
+            storage.mount("/test", root);
+            storage.mount("/test/test", root);
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+            storage.unmount("/test", root);
+            storage.unmount("/test/test", root);
+        }
+    });
+
+    std::thread attacherThread = std::thread([&latch, &root]()
+    {
+        latch.arrive_and_wait();
+
+        for (size_t i = 0; i < 100; ++i)
+        {
+            jbkvs::NodePtr child = jbkvs::Node::create(root, "test");
+            child->put(123u, 1u);
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+            child->detach();
+        }
+    });
+
+    readerThread.join();
+    mounterThread.join();
+    attacherThread.join();
+
+    jbkvs::StorageNodePtr storageNode = storage.getNode("/test");
+    ASSERT_EQ(!!storageNode, false);
 }

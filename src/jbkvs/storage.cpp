@@ -4,7 +4,8 @@ namespace jbkvs
 {
 
     Storage::Storage()
-        : _root(StorageNode::_create())
+        : _mountPriorityCounter()
+        , _root(StorageNode::_create())
     {
     }
 
@@ -24,7 +25,11 @@ namespace jbkvs
             return false;
         }
 
-        _root->_mountVirtual(path.substr(1), node);
+        uint32_t priority = ++_mountPriorityCounter;
+
+        detail::SubTreeLock subTreeLock(node);
+
+        _root->_mountVirtual(path.substr(1), node, priority);
         return true;
     }
 
@@ -39,6 +44,8 @@ namespace jbkvs
         {
             return false;
         }
+
+        detail::SubTreeLock subTreeLock(node);
 
         StorageNode::_UnmountResult unmountResult = _root->_unmountVirtual(path.substr(1), node);
         return unmountResult.success;

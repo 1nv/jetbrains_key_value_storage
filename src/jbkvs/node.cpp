@@ -1,9 +1,27 @@
 #include <jbkvs/node.h>
+#include <jbkvs/storageNode.h>
 
 #include <assert.h>
+#include <algorithm>
 
 namespace jbkvs
 {
+
+    namespace detail
+    {
+
+        SubTreeLock::SubTreeLock(const NodePtr& node)
+            : _node(node)
+        {
+            _node->_lockSubTree();
+        }
+
+        SubTreeLock::~SubTreeLock()
+        {
+            _node->_unlockSubTree();
+        }
+
+    } // namespace detail
 
     NodePtr Node::create()
     {
@@ -20,31 +38,20 @@ namespace jbkvs
             }
         };
 
+        NodePtr newNode = std::make_shared<MakeSharedEnabledNode>(parent, std::string(name));
         if (parent)
         {
-            std::shared_lock lock(parent->_mountMutex);
-
-            if (parent->_mountCounter > 0)
-            {
-                return NodePtr();
-            }
-
-            NodePtr newNode = std::make_shared<MakeSharedEnabledNode>(parent, std::string(name));
-            parent->_children.put(newNode->_name, newNode);
-            return newNode;
+            parent->_attachChild(newNode->_name, newNode);
         }
-        else
-        {
-            NodePtr newNode = std::make_shared<MakeSharedEnabledNode>(parent, std::string(name));
-            return newNode;
-        }
+
+        return newNode;
     }
 
     Node::Node(const NodePtr& parent, std::string&& name)
         : _parent(parent)
         , _name(std::move(name))
-        , _mountMutex()
-        , _mountCounter()
+        , _mutex()
+        , _mountPoints()
         , _children()
         , _data()
     {
@@ -55,21 +62,34 @@ namespace jbkvs
         _children.clear();
     }
 
+    void Node::_lockSubTree()
+    {
+        _mutex.lock();
+
+        for (auto it = _children.begin(); it != _children.end(); ++it)
+        {
+            it->second->_lockSubTree();
+        }
+    }
+
+    void Node::_unlockSubTree()
+    {
+        for (auto it = _children.rbegin(); it != _children.rend(); ++it)
+        {
+            it->second->_unlockSubTree();
+        }
+
+        _mutex.unlock();
+    }
+
     bool Node::detach()
     {
         NodePtr parent = _parent.lock();
+        _parent.reset();
         if (parent)
         {
-            std::shared_lock lock(parent->_mountMutex);
-
-            if (parent->_mountCounter > 0)
-            {
-                return false;
-            }
-
-            _parent.reset();
-            parent->_children.remove(_name);
-            return true;
+            bool detached = parent->_detachChild(_name);
+            return detached;
         }
         else
         {
@@ -79,23 +99,70 @@ namespace jbkvs
 
     NodePtr Node::getChild(const std::string_view& name) const
     {
-        std::optional<NodePtr> optionalPtr = _children.get(name);
-        return optionalPtr ? *optionalPtr : NodePtr();
+        std::shared_lock lock(_mutex);
+
+        auto it = _children.find(name);
+        return (it != _children.end()) ? it->second : NodePtr();
     }
 
-    void Node::_onMounting()
+    void Node::_attachChild(const std::string& name, const NodePtr& child)
     {
-        std::unique_lock lock(_mountMutex);
+        std::unique_lock lock(_mutex);
 
-        ++_mountCounter;
+        // No need to lock on child, as we only attach newly created nodes that haven't been announced elsewhere.
+
+        _children[name] = child;
+
+        for (const MountPoint& mountPoint : _mountPoints)
+        {
+            mountPoint.storageNode->_attachMountedNodeChild(mountPoint.depth, mountPoint.priority, name, child);
+        }
     }
 
-    void Node::_onUnmounted()
+    bool Node::_detachChild(const std::string& name)
     {
-        std::unique_lock lock(_mountMutex);
+        std::unique_lock lock(_mutex);
 
-        assert(_mountCounter > 0);
-        --_mountCounter;
+        // TODO: think if it is better to use shared_from_this().
+        auto childIt = _children.find(name);
+        if (childIt == _children.end())
+        {
+            // This might happen if we call detach() too fast from different threads.
+            return false;
+        }
+        const NodePtr& child = childIt->second;
+
+        detail::SubTreeLock subTreeLock(child);
+
+        for (auto it = _mountPoints.rbegin(); it != _mountPoints.rend(); ++it)
+        {
+            it->storageNode->_detachMountedNodeChild(it->depth, name, child);
+        }
+
+        _children.erase(childIt);
+
+        return true;
+    }
+
+    void Node::_onMounting(StorageNode* storageNode, size_t depth, uint32_t priority)
+    {
+        _mountPoints.emplace_back(storageNode, depth, priority);
+    }
+
+    void Node::_onUnmounted(StorageNode* storageNode, size_t depth)
+    {
+        auto it = std::find_if(_mountPoints.rbegin(), _mountPoints.rend(), [&](const MountPoint& mountPoint)
+        {
+            return mountPoint.storageNode == storageNode && mountPoint.depth == depth;
+        });
+
+        if (it == _mountPoints.rend())
+        {
+            assert(false);
+            return;
+        }
+
+        _mountPoints.erase(std::next(it).base());
     }
 
 } // namespace jbkvs

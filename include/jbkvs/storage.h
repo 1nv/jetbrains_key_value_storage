@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 #include <jbkvs/storageNode.h>
 
 namespace jbkvs
@@ -8,6 +10,7 @@ namespace jbkvs
     class Storage
         : detail::NonCopyableMixin<Storage>
     {
+        std::atomic<uint32_t> _mountPriorityCounter;
         StorageNodePtr _root;
 
     public:

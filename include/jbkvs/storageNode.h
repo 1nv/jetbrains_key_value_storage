@@ -13,6 +13,7 @@ namespace jbkvs
         : public detail::NonCopyableMixin<StorageNode>
     {
         friend class Storage;
+        friend class Node;
 
         static inline const char _pathSeparator = '/';
 
@@ -20,8 +21,9 @@ namespace jbkvs
         {
             NodePtr node;
             size_t depth;
+            uint32_t priority;
 
-            MountedNode(const NodePtr& node, size_t depth) : node(node), depth(depth) {}
+            MountedNode(const NodePtr& node, size_t depth, uint32_t priority) : node(node), depth(depth), priority(priority) {}
         };
 
         // TODO: try lock-free approach.
@@ -63,10 +65,13 @@ namespace jbkvs
             bool detach : 1;
         };
 
-        void _mountVirtual(const std::string_view& path, const NodePtr& node);
+        void _mountVirtual(const std::string_view& path, const NodePtr& node, uint32_t priority);
         _UnmountResult _unmountVirtual(const std::string_view& path, const NodePtr& node);
-        void _mount(const NodePtr& node, size_t depth);
+        void _mount(const NodePtr& node, size_t depth, uint32_t priority);
         _UnmountResult _unmount(const NodePtr& node, size_t depth);
+
+        void _attachMountedNodeChild(size_t depth, uint32_t priority, const std::string& childName, const NodePtr& childNode);
+        void _detachMountedNodeChild(size_t depth, const std::string& childName, const NodePtr& childNode);
 
         bool _isReadyForDetach() const noexcept;
     };

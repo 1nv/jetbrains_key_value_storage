@@ -1,4 +1,7 @@
 #include <gtest/gtest.h>
+#include "testUtils.h"
+
+#include <thread>
 
 #include <jbkvs/node.h>
 #include <jbkvs/storage.h>
@@ -128,7 +131,7 @@ TEST(NodeTest, MultipleValueTypesAreSupported)
     }
 }
 
-TEST(NodeTest, CreationOfMountedNodeChildShoudBeDisallowed)
+TEST(NodeTest, CreationOfMountedNodeChildShoudBeAllowed)
 {
     jbkvs::NodePtr node = jbkvs::Node::create();
 
@@ -136,10 +139,10 @@ TEST(NodeTest, CreationOfMountedNodeChildShoudBeDisallowed)
     storage.mount("/", node);
 
     jbkvs::NodePtr child = jbkvs::Node::create(node, "test");
-    EXPECT_EQ(!!child, false);
+    EXPECT_EQ(!!child, true);
 }
 
-TEST(NodeTest, DetachOfMountedNodeShoudBeDisallowed)
+TEST(NodeTest, DetachOfMountedNodeShoudBeAllowed)
 {
     jbkvs::NodePtr node = jbkvs::Node::create();
     jbkvs::NodePtr child = jbkvs::Node::create(node, "test");
@@ -148,7 +151,7 @@ TEST(NodeTest, DetachOfMountedNodeShoudBeDisallowed)
     storage.mount("/", node);
 
     bool detached = child->detach();
-    EXPECT_EQ(detached, false);
+    EXPECT_EQ(detached, true);
 }
 
 TEST(NodeTest, GetChildrenWorks)
@@ -158,18 +161,14 @@ TEST(NodeTest, GetChildrenWorks)
     jbkvs::NodePtr child2 = jbkvs::Node::create(root, "2");
     jbkvs::NodePtr child3 = jbkvs::Node::create(root, "3");
 
-    const auto& children = root->getChildren();
-    auto c1 = children.get("1");
-    auto c2 = children.get("2");
-    auto c3 = children.get("3");
+    auto children = root->getChildren();
+    jbkvs::NodePtr c1 = children.get("1");
+    jbkvs::NodePtr c2 = children.get("2");
+    jbkvs::NodePtr c3 = children.get("3");
 
-    ASSERT_EQ(!!c1, true);
-    ASSERT_EQ(!!c2, true);
-    ASSERT_EQ(!!c3, true);
-
-    EXPECT_EQ(*c1, child1);
-    EXPECT_EQ(*c2, child2);
-    EXPECT_EQ(*c3, child3);
+    ASSERT_EQ(c1, child1);
+    ASSERT_EQ(c2, child2);
+    ASSERT_EQ(c3, child3);
 }
 
 static std::string _bigString = std::string(1024, 'a');
@@ -192,7 +191,7 @@ static void _createLargeVolumeChildren(const jbkvs::NodePtr& node, size_t depth,
 
 static void _verifyLargeVolumeChildren(const jbkvs::NodePtr& node, size_t depth, size_t count, size_t maxDepth)
 {
-    const auto& children = node->getChildren();
+    auto children = node->getChildren();
 
     if (depth == maxDepth)
     {
@@ -217,4 +216,36 @@ TEST(NodeTest, LargeVolumesAreSupported)
 
     _createLargeVolumeChildren(root, 0, 10, 6);
     _verifyLargeVolumeChildren(root, 0, 10, 6);
+}
+
+TEST(NodeTest, ConcurrentDetachWorks)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr child = jbkvs::Node::create(root, "test");
+
+    std::thread detachThreads[4];
+    SimpleLatch latch(std::size(detachThreads));
+
+    std::atomic<uint32_t> successfulDetachCounter(0);
+
+    for (size_t i = 0; i < std::size(detachThreads); ++i)
+    {
+        detachThreads[i] = std::thread([&latch, &child, &successfulDetachCounter]()
+        {
+            latch.arrive_and_wait();
+
+            bool detached = child->detach();
+            if (detached)
+            {
+                ++successfulDetachCounter;
+            }
+        });
+    }
+
+    for (size_t i = 0; i < std::size(detachThreads); ++i)
+    {
+        detachThreads[i].join();
+    }
+
+    ASSERT_EQ(successfulDetachCounter.load(), 1u);
 }
