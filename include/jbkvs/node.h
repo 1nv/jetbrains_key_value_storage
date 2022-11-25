@@ -89,7 +89,8 @@ namespace jbkvs
 
         class ChildrenMapWrapper
         {
-            // TODO: think if it is better to hold NodePtr here (requires shared_from_this).
+            // TODO: think if it is better to hold NodePtr here (requires shared_from_this, decreases performance).
+            // Currently the object can only be operated while someone holds a NodePtr towards target node.
             std::shared_mutex& _mutex;
             const std::map<std::string, NodePtr, std::less<>>& _children;
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atomic>
 #include <list>
 
 #include <jbkvs/storageNode.h>

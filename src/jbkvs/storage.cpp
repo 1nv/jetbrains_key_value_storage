@@ -107,8 +107,7 @@ namespace jbkvs
 
         StorageNodePtr current = _root;
 
-        size_t end;
-        for (size_t start = 1; start < length; start = end + 1)
+        for (size_t start = 1, end; start < length; start = end + 1)
         {
             end = path.find(StorageNode::_pathSeparator, start);
 

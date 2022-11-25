@@ -121,13 +121,13 @@ namespace jbkvs
         node->_onMounting(this, depth, priority);
 
         auto it = std::lower_bound(_mountedNodes.begin(), _mountedNodes.end(), priority, [](const MountedNode& mountedNode, uint32_t p)
-            {
-                return mountedNode.priority < p;
-            });
+        {
+            return mountedNode.priority < p;
+        });
 
         _mountedNodes.emplace(it, node, depth, priority);
 
-        for (const auto& [childName, nodeChild] : node->_children)
+        for (const auto& [childName, childNode] : node->_children)
         {
             StorageNodePtr& child = _children[childName];
             if (!child)
@@ -135,7 +135,7 @@ namespace jbkvs
                 child = _create();
             }
 
-            child->_mount(nodeChild, depth + 1, priority);
+            child->_mount(childNode, depth + 1, priority);
         }
     }
 
@@ -144,9 +144,9 @@ namespace jbkvs
         std::unique_lock lock(_mutex);
 
         auto it = std::find_if(_mountedNodes.rbegin(), _mountedNodes.rend(), [&](const MountedNode& mountedNode)
-            {
-                return mountedNode.node == node && mountedNode.depth == depth;
-            });
+        {
+            return mountedNode.node == node && mountedNode.depth == depth;
+        });
 
         if (it == _mountedNodes.rend())
         {
