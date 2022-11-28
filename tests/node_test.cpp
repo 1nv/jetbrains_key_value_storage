@@ -13,6 +13,17 @@ TEST(NodeTest, EmptyNodeCanBeCreated)
     jbkvs::NodePtr node = jbkvs::Node::create();
 }
 
+TEST(NodeTest, AttachingTwoChildrenWithSameNameFails)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr child1 = jbkvs::Node::create(root, "child");
+    jbkvs::NodePtr child2 = jbkvs::Node::create(root, "child");
+
+    ASSERT_EQ(!!child2, false);
+    jbkvs::NodePtr child = root->getChild("child");
+    ASSERT_EQ(child, child1);
+}
+
 TEST(NodeTest, SimpleNodeHierarchyCanBeCreated)
 {
     jbkvs::NodePtr root = jbkvs::Node::create();

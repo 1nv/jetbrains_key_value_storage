@@ -179,7 +179,7 @@ namespace jbkvs
         void _lockSubTree();
         void _unlockSubTree();
 
-        void _attachChild(const std::string& name, const NodePtr& child);
+        bool _attachChild(const std::string& name, const NodePtr& child);
         bool _detachChild(const std::string& name);
 
         void _onMounting(StorageNode* storageNode, size_t depth, uint32_t priority);

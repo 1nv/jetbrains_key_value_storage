@@ -41,7 +41,11 @@ namespace jbkvs
         NodePtr newNode = std::make_shared<MakeSharedEnabledNode>(parent, name);
         if (parent)
         {
-            parent->_attachChild(newNode->_name, newNode);
+            bool attached = parent->_attachChild(newNode->_name, newNode);
+            if (!attached)
+            {
+                return NodePtr();
+            }
         }
 
         return newNode;
@@ -111,18 +115,26 @@ namespace jbkvs
         return (it != _children.end()) ? it->second : NodePtr();
     }
 
-    void Node::_attachChild(const std::string& name, const NodePtr& child)
+    bool Node::_attachChild(const std::string& name, const NodePtr& child)
     {
         std::unique_lock lock(_mutex);
 
+        NodePtr& currentChild = _children[name];
+        if (currentChild)
+        {
+            return false;
+        }
+
         // No need to lock on child, as we only attach newly created nodes that haven't been announced elsewhere.
 
-        _children[name] = child;
+        currentChild = child;
 
         for (const MountPoint& mountPoint : _mountPoints)
         {
             mountPoint.storageNode->_attachMountedNodeChild(mountPoint.depth, mountPoint.priority, name, child);
         }
+
+        return true;
     }
 
     bool Node::_detachChild(const std::string& name)
