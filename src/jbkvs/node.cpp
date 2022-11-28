@@ -32,13 +32,13 @@ namespace jbkvs
     {
         struct MakeSharedEnabledNode : public Node
         {
-            MakeSharedEnabledNode(const NodePtr& parent, std::string&& name)
-                : Node(parent, std::move(name))
+            MakeSharedEnabledNode(const NodePtr& parent, const std::string_view& name)
+                : Node(parent, name)
             {
             }
         };
 
-        NodePtr newNode = std::make_shared<MakeSharedEnabledNode>(parent, std::string(name));
+        NodePtr newNode = std::make_shared<MakeSharedEnabledNode>(parent, name);
         if (parent)
         {
             parent->_attachChild(newNode->_name, newNode);
@@ -47,9 +47,9 @@ namespace jbkvs
         return newNode;
     }
 
-    Node::Node(const NodePtr& parent, std::string&& name)
+    Node::Node(const NodePtr& parent, const std::string_view& name)
         : _parent(parent)
-        , _name(std::move(name))
+        , _name(name)
         , _mutex()
         , _mountPoints()
         , _children()

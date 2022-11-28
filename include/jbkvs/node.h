@@ -173,7 +173,7 @@ namespace jbkvs
         }
 
     private:
-        Node(const NodePtr& parent, std::string&& name);
+        Node(const NodePtr& parent, const std::string_view& name);
         ~Node();
 
         void _lockSubTree();
