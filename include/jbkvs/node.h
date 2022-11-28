@@ -73,7 +73,7 @@ namespace jbkvs
             }
 
             T* data = std::get_if<T>(&*value);
-            return data ? std::optional<T>(*data) : std::optional<T>();
+            return data ? std::optional<T>(std::move(*data)) : std::optional<T>();
         }
 
         template <typename T>
