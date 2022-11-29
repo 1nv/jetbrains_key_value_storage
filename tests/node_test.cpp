@@ -73,6 +73,29 @@ TEST(NodeTest, SimpleNodeHierarchyCanBeCreated)
     EXPECT_EQ(subChildA1->getParent(), childA);
 }
 
+TEST(NodeTest, GetNameWorks)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr rootWithName = jbkvs::Node::create(jbkvs::NodePtr(), "rootWithName");
+    jbkvs::NodePtr childA = jbkvs::Node::create(root, "A");
+    jbkvs::NodePtr childB = jbkvs::Node::create(root, "B");
+    jbkvs::NodePtr subChildA1 = jbkvs::Node::create(childA, "1");
+
+    EXPECT_EQ(root->getName(), ""s);
+    EXPECT_EQ(rootWithName->getName(), "rootWithName"s);
+    EXPECT_EQ(childA->getName(), "A"s);
+    EXPECT_EQ(childB->getName(), "B"s);
+    EXPECT_EQ(subChildA1->getName(), "1"s);
+
+    childA->detach();
+
+    EXPECT_EQ(subChildA1->getName(), "1"s);
+
+    subChildA1->detach();
+
+    EXPECT_EQ(subChildA1->getName(), "1"s);
+}
+
 TEST(NodeTest, GetChildReturnsOnlyExistingChildren)
 {
     jbkvs::NodePtr root = jbkvs::Node::create();
