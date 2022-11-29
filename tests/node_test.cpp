@@ -348,8 +348,8 @@ TEST(NodeTest, LargeVolumesAreSupported)
 {
     jbkvs::NodePtr root = jbkvs::Node::create();
 
-    _createLargeVolumeChildren(root, 0, 10, 6);
-    _verifyLargeVolumeChildren(root, 0, 10, 6);
+    _createLargeVolumeChildren(root, 0, 9, 6);
+    _verifyLargeVolumeChildren(root, 0, 9, 6);
 }
 
 TEST(NodeTest, ConcurrentDetachWorks)
