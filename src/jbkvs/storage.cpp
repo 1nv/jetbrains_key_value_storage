@@ -7,7 +7,9 @@ namespace jbkvs
 {
 
     Storage::Storage()
-        : _mountPriorityCounter()
+        : _mutex()
+        , _mountPriorityCounter()
+        , _mountPoints()
         , _root(StorageNode::_create())
     {
     }
