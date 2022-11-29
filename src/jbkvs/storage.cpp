@@ -36,6 +36,12 @@ namespace jbkvs
             return false;
         }
 
+        char consecutiveSeparators[] = { StorageNode::_pathSeparator, StorageNode::_pathSeparator , 0 };
+        if (path.find(consecutiveSeparators) != std::string_view::npos)
+        {
+            return false;
+        }
+
         std::unique_lock lock(_mutex);
 
         uint32_t priority = ++_mountPriorityCounter;

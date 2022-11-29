@@ -30,6 +30,23 @@ TEST(StorageTest, MountWithNonSeparatorStartedPathFails)
     EXPECT_EQ(mounted, false);
 }
 
+TEST(StorageTest, MountWithInvalidPathFails)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+
+    jbkvs::Storage storage;
+    bool mounted;
+
+    mounted = storage.mount("//", root);
+    EXPECT_EQ(mounted, false);
+
+    mounted = storage.mount("/test//", root);
+    EXPECT_EQ(mounted, false);
+
+    mounted = storage.mount("/test//test", root);
+    EXPECT_EQ(mounted, false);
+}
+
 TEST(StorageTest, MountWithNullNodeFails)
 {
     jbkvs::Storage storage;
