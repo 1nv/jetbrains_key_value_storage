@@ -83,11 +83,11 @@ namespace jbkvs
             return false;
         }
 
-        bool result = _unmount(it);
-        return result;
+        _unmount(it);
+        return true;
     }
 
-    bool Storage::_unmount(const decltype(_mountPoints)::reverse_iterator& it)
+    void Storage::_unmount(const decltype(_mountPoints)::reverse_iterator& it)
     {
         MountPoint mountPoint = std::move(*it);
 
@@ -95,8 +95,7 @@ namespace jbkvs
 
         detail::SubTreeLock subTreeLock(mountPoint.node);
 
-        StorageNode::_UnmountResult unmountResult = _root->_unmountVirtual(std::string_view(mountPoint.path).substr(1), mountPoint.node);
-        return unmountResult.success;
+        _root->_unmountVirtual(std::string_view(mountPoint.path).substr(1), mountPoint.node);
     }
 
     StorageNodePtr Storage::getNode(const std::string_view& path) const

@@ -37,7 +37,7 @@ namespace jbkvs
 
     private:
         void _mount(const std::string_view& path, const NodePtr& node, uint32_t priority);
-        bool _unmount(const decltype(_mountPoints)::reverse_iterator& it);
+        void _unmount(const decltype(_mountPoints)::reverse_iterator& it);
     };
 
 } // namespace jbkvs

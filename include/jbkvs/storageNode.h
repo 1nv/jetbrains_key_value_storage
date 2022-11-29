@@ -59,16 +59,10 @@ namespace jbkvs
         StorageNode();
         ~StorageNode();
 
-        struct _UnmountResult
-        {
-            bool success : 1;
-            bool detach : 1;
-        };
-
         void _mountVirtual(const std::string_view& path, const NodePtr& node, uint32_t priority);
-        _UnmountResult _unmountVirtual(const std::string_view& path, const NodePtr& node);
+        bool _unmountVirtual(const std::string_view& path, const NodePtr& node);
         void _mount(const NodePtr& node, size_t depth, uint32_t priority);
-        _UnmountResult _unmount(const NodePtr& node, size_t depth);
+        bool _unmount(const NodePtr& node, size_t depth);
 
         void _attachMountedNodeChild(size_t depth, uint32_t priority, const std::string& childName, const NodePtr& childNode);
         void _detachMountedNodeChild(size_t depth, const std::string& childName, const NodePtr& childNode);
