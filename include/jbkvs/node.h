@@ -61,6 +61,7 @@ namespace jbkvs
 
         bool detach();
 
+        NodePtr getParent() const;
         NodePtr getChild(const std::string_view& name) const;
 
         template <typename T>

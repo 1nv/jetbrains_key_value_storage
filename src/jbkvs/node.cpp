@@ -117,6 +117,14 @@ namespace jbkvs
         }
     }
 
+    NodePtr Node::getParent() const
+    {
+        std::shared_lock lock(_mutex);
+
+        NodePtr parent = _parent.lock();
+        return parent;
+    }
+
     NodePtr Node::getChild(const std::string_view& name) const
     {
         std::shared_lock lock(_mutex);

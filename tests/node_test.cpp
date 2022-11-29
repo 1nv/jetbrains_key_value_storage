@@ -53,6 +53,8 @@ TEST(NodeTest, AttachingTwoChildrenWithSameNameFails)
     ASSERT_EQ(!!child2, false);
     jbkvs::NodePtr child = root->getChild("child");
     ASSERT_EQ(child, child1);
+    jbkvs::NodePtr parent = child1->getParent();
+    ASSERT_EQ(parent, root);
 }
 
 TEST(NodeTest, SimpleNodeHierarchyCanBeCreated)
@@ -62,9 +64,13 @@ TEST(NodeTest, SimpleNodeHierarchyCanBeCreated)
     jbkvs::NodePtr childB = jbkvs::Node::create(root, "B");
     jbkvs::NodePtr subChildA1 = jbkvs::Node::create(childA, "1");
 
+    EXPECT_EQ(root->getParent(), jbkvs::NodePtr());
     EXPECT_EQ(root->getChild("A"), childA);
+    EXPECT_EQ(childA->getParent(), root);
     EXPECT_EQ(root->getChild("B"), childB);
+    EXPECT_EQ(childB->getParent(), root);
     EXPECT_EQ(childA->getChild("1"), subChildA1);
+    EXPECT_EQ(subChildA1->getParent(), childA);
 }
 
 TEST(NodeTest, GetChildReturnsOnlyExistingChildren)
@@ -97,6 +103,7 @@ TEST(NodeTest, DetachRemovesNodeFromParent)
 
     ASSERT_EQ(detached, true);
     EXPECT_EQ(root->getChild("A"), jbkvs::NodePtr());
+    EXPECT_EQ(child->getParent(), jbkvs::NodePtr());
 }
 
 TEST(NodeTest, DetachOnRootShouldNotWork)
@@ -220,6 +227,7 @@ TEST(NodeTest, DetachOfMountedNodeShoudBeAllowed)
 
     bool detached = child->detach();
     EXPECT_EQ(detached, true);
+    EXPECT_EQ(child->getParent(), jbkvs::NodePtr());
 }
 
 TEST(NodeTest, GetChildrenWorks)
@@ -351,4 +359,5 @@ TEST(NodeTest, ConcurrentDetachWorks)
     }
 
     ASSERT_EQ(successfulDetachCounter.load(), 1u);
+    EXPECT_EQ(child->getParent(), jbkvs::NodePtr());
 }
