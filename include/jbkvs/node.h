@@ -61,7 +61,7 @@ namespace jbkvs
 
         bool detach();
 
-        const std::string& getName() const { return _name; }
+        const std::string& getName() const noexcept { return _name; }
 
         NodePtr getParent() const;
         NodePtr getChild(const std::string_view& name) const;
