@@ -78,6 +78,17 @@ TEST(NodeTest, GetChildReturnsOnlyExistingChildren)
     EXPECT_EQ(root->getChild("C"), jbkvs::NodePtr());
 }
 
+TEST(NodeTest, GetChildReturnsOnlyDirectChildren)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr child = jbkvs::Node::create(root, "child");
+    jbkvs::NodePtr subChild = jbkvs::Node::create(child, "subChild");
+
+    EXPECT_EQ(root->getChild("child"), child);
+    EXPECT_EQ(child->getChild("subChild"), subChild);
+    EXPECT_EQ(root->getChild("child/subChild"), jbkvs::NodePtr());
+}
+
 TEST(NodeTest, DetachRemovesNodeFromParent)
 {
     jbkvs::NodePtr root = jbkvs::Node::create();
@@ -94,6 +105,21 @@ TEST(NodeTest, DetachOnRootShouldNotWork)
     bool detached = root->detach();
 
     ASSERT_EQ(detached, false);
+}
+
+TEST(NodeTest, ConsecutiveGetReturnsSameResult)
+{
+    jbkvs::NodePtr node = jbkvs::Node::create();
+
+    node->put(123u, "string"s);
+
+    auto gotStr1 = node->get<std::string>(123u);
+    ASSERT_EQ(!!gotStr1, true);
+    EXPECT_EQ(*gotStr1, "string"s);
+
+    auto gotStr2 = node->get<std::string>(123u);
+    ASSERT_EQ(!!gotStr2, true);
+    EXPECT_EQ(*gotStr2, "string"s);
 }
 
 TEST(NodeTest, GetPutRemoveSequenceWorks)
@@ -211,6 +237,41 @@ TEST(NodeTest, GetChildrenWorks)
     ASSERT_EQ(c1, child1);
     ASSERT_EQ(c2, child2);
     ASSERT_EQ(c3, child3);
+}
+
+TEST(NodeTest, GetChildrenIterationWorksConcurrently)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr child1 = jbkvs::Node::create(root, "1");
+    jbkvs::NodePtr child2 = jbkvs::Node::create(root, "2");
+    jbkvs::NodePtr child3 = jbkvs::Node::create(root, "3");
+
+    SimpleLatch latch(2);
+
+    std::thread removeThread([&child2, &latch]()
+    {
+        latch.arrive_and_wait();
+        child2->detach();
+    });
+
+    auto children = root->getChildren();
+    std::vector<std::pair<const std::string, jbkvs::NodePtr>> pairs;
+    for (const auto& pair : children)
+    {
+        if (pairs.empty())
+        {
+            latch.arrive_and_wait();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        pairs.push_back(pair);
+    }
+
+    removeThread.join();
+
+    ASSERT_EQ(pairs.size(), 3);
+    EXPECT_NE(std::find(pairs.begin(), pairs.end(), std::pair<const std::string, jbkvs::NodePtr>("1"s, child1)), pairs.end());
+    EXPECT_NE(std::find(pairs.begin(), pairs.end(), std::pair<const std::string, jbkvs::NodePtr>("2"s, child2)), pairs.end());
+    EXPECT_NE(std::find(pairs.begin(), pairs.end(), std::pair<const std::string, jbkvs::NodePtr>("3"s, child3)), pairs.end());
 }
 
 static std::string _bigString = std::string(1024, 'a');
