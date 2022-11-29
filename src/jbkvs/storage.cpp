@@ -113,7 +113,7 @@ namespace jbkvs
         {
             end = path.find(StorageNode::_pathSeparator, start);
 
-            if (end == std::string::npos)
+            if (end == std::string_view::npos)
             {
                 end = length;
             }

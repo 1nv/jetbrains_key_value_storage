@@ -43,7 +43,7 @@ namespace jbkvs
             return NodePtr();
         }
 
-        if (name.find('/') != std::string::npos)
+        if (name.find('/') != std::string_view::npos)
         {
             return NodePtr();
         }
