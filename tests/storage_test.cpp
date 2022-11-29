@@ -655,6 +655,27 @@ TEST(StorageTest, DetachOfMountedTreeRemovesEmptyStorageNodes)
     ASSERT_EQ(*data, 2u);
 }
 
+TEST(StorageTest, DetachOfMountedNodeWithParentWorks)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr mountRoot = jbkvs::Node::create(root, "mountRoot");
+    jbkvs::NodePtr child = jbkvs::Node::create(mountRoot, "child");
+    child->put(123u, "data"s);
+
+    jbkvs::Storage storage;
+    storage.mount("/mountRoot", mountRoot);
+
+    bool detached = mountRoot->detach();
+    ASSERT_EQ(detached, true);
+
+    jbkvs::StorageNodePtr storageNode = storage.getNode("/mountRoot/child");
+    ASSERT_EQ(!!storageNode, true);
+
+    auto got = storageNode->get<std::string>(123u);
+    ASSERT_EQ(!!got, true);
+    EXPECT_EQ(*got, "data"s);
+}
+
 TEST(StorageTest, ConcurrentOperationsWork)
 {
     jbkvs::NodePtr root = jbkvs::Node::create();
