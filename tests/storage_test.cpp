@@ -59,6 +59,22 @@ TEST(StorageTest, RootMountWorks)
     EXPECT_EQ(*data, "data"s);
 }
 
+TEST(StorageTest, UnmountWithInvalidPathFails)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+
+    jbkvs::Storage storage;
+    storage.mount("/root", root);
+
+    bool unmounted;
+
+    unmounted = storage.unmount("/test", root);
+    EXPECT_EQ(unmounted, false);
+
+    unmounted = storage.unmount("/", root);
+    EXPECT_EQ(unmounted, false);
+}
+
 TEST(StorageTest, UnmountWithInvalidNodeFails)
 {
     jbkvs::NodePtr volumeRoot = jbkvs::Node::create();
