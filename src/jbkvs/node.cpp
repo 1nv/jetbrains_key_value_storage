@@ -38,6 +38,16 @@ namespace jbkvs
             }
         };
 
+        if (parent && name.empty())
+        {
+            return NodePtr();
+        }
+
+        if (name.find('/') != std::string::npos)
+        {
+            return NodePtr();
+        }
+
         NodePtr newNode = std::make_shared<MakeSharedEnabledNode>(parent, name);
         if (parent)
         {

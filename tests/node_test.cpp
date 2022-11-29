@@ -10,7 +10,38 @@ using namespace std::literals::string_literals;
 
 TEST(NodeTest, EmptyNodeCanBeCreated)
 {
-    jbkvs::NodePtr node = jbkvs::Node::create();
+    jbkvs::NodePtr root = jbkvs::Node::create();
+    jbkvs::NodePtr rootWithName = jbkvs::Node::create(jbkvs::NodePtr(), "test");
+
+    EXPECT_EQ(!!root, true);
+    EXPECT_EQ(!!rootWithName, true);
+}
+
+TEST(NodeTest, CreatingChildWithInvalidNameFails)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+
+    jbkvs::NodePtr rootSeparator = jbkvs::Node::create(jbkvs::NodePtr(), "/");
+    jbkvs::NodePtr rootSeparatorBegin = jbkvs::Node::create(jbkvs::NodePtr(), "/test");
+    jbkvs::NodePtr rootSeparatorMiddle = jbkvs::Node::create(jbkvs::NodePtr(), "te/st");
+    jbkvs::NodePtr rootSeparatorEnd = jbkvs::Node::create(jbkvs::NodePtr(), "test/");
+
+    jbkvs::NodePtr childEmpty = jbkvs::Node::create(root, "");
+    jbkvs::NodePtr childSeparator = jbkvs::Node::create(root, "/");
+    jbkvs::NodePtr childSeparatorBegin = jbkvs::Node::create(root, "/test");
+    jbkvs::NodePtr childSeparatorMiddle = jbkvs::Node::create(root, "te/st");
+    jbkvs::NodePtr childSeparatorEnd = jbkvs::Node::create(root, "test/");
+
+    EXPECT_EQ(!!rootSeparator, false);
+    EXPECT_EQ(!!rootSeparatorBegin, false);
+    EXPECT_EQ(!!rootSeparatorMiddle, false);
+    EXPECT_EQ(!!rootSeparatorEnd, false);
+
+    EXPECT_EQ(!!childEmpty, false);
+    EXPECT_EQ(!!childSeparator, false);
+    EXPECT_EQ(!!childSeparatorBegin, false);
+    EXPECT_EQ(!!childSeparatorMiddle, false);
+    EXPECT_EQ(!!childSeparatorEnd, false);
 }
 
 TEST(NodeTest, AttachingTwoChildrenWithSameNameFails)
