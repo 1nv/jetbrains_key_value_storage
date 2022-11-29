@@ -9,6 +9,47 @@
 namespace jbkvs::detail
 {
 
+    class SharedMutexMapConstIteratorEndTag
+    {
+    };
+
+    template <typename TKey, typename TValue>
+    class SharedMutexMapConstIterator
+        : NonCopyableMixin<SharedMutexMapConstIterator<TKey, TValue>>
+    {
+        std::shared_lock<std::shared_mutex> _lock;
+        typename std::map<TKey, TValue, std::less<>>::const_iterator _it;
+        typename std::map<TKey, TValue, std::less<>>::const_iterator _endIt;
+
+    public:
+        SharedMutexMapConstIterator(std::shared_mutex& mutex, const std::map<TKey, TValue, std::less<>>& map)
+            : _lock(mutex)
+            , _it(map.begin())
+            , _endIt(map.end())
+        {
+        }
+
+        ~SharedMutexMapConstIterator()
+        {
+        }
+
+        const std::pair<const TKey, TValue>& operator*() const noexcept
+        {
+            return *_it;
+        }
+
+        SharedMutexMapConstIterator& operator++() noexcept
+        {
+            ++_it;
+            return *this;
+        }
+
+        bool operator!=(const SharedMutexMapConstIteratorEndTag& endTag) const noexcept
+        {
+            return _it != _endIt;
+        }
+    };
+
     template <typename TKey, typename TValue>
     class SharedMutexMap
         : public NonCopyableMixin<SharedMutexMap<TKey, TValue>>
@@ -71,54 +112,14 @@ namespace jbkvs::detail
             return _map.size();
         }
 
-        class ConstIteratorEndTag
+        SharedMutexMapConstIterator<TKey, TValue> begin() const
         {
-        };
-
-        class ConstIterator
-            : NonCopyableMixin<ConstIterator>
-        {
-            std::shared_lock<std::shared_mutex> _lock;
-            typename std::map<TKey, TValue>::const_iterator _it;
-            typename std::map<TKey, TValue>::const_iterator _endIt;
-
-        public:
-            ConstIterator(const SharedMutexMap<TKey, TValue>& map)
-                : _lock(map._mutex)
-                , _it(map._map.begin())
-                , _endIt(map._map.end())
-            {
-            }
-
-            ~ConstIterator()
-            {
-            }
-
-            const std::pair<const TKey, TValue>& operator*() const noexcept
-            {
-                return *_it;
-            }
-
-            ConstIterator& operator++() noexcept
-            {
-                ++_it;
-                return *this;
-            }
-
-            bool operator!=(const ConstIteratorEndTag& endTag) const noexcept
-            {
-                return _it != _endIt;
-            }
-        };
-
-        ConstIterator begin() const
-        {
-            return ConstIterator(*this);
+            return SharedMutexMapConstIterator<TKey, TValue>(_mutex, _map);
         }
 
-        ConstIteratorEndTag end() const
+        SharedMutexMapConstIteratorEndTag end() const
         {
-            return ConstIteratorEndTag();
+            return {};
         }
     };
 

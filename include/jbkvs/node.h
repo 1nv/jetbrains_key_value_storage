@@ -116,54 +116,14 @@ namespace jbkvs
                 return _children.size();
             }
 
-            class ConstIteratorEndTag
+            detail::SharedMutexMapConstIterator<std::string, NodePtr> begin() const
             {
-            };
-
-            class ConstIterator
-                : NonCopyableMixin<ConstIterator>
-            {
-                std::shared_lock<std::shared_mutex> _lock;
-                typename std::map<std::string, NodePtr, std::less<>>::const_iterator _it;
-                typename std::map<std::string, NodePtr, std::less<>>::const_iterator _endIt;
-
-            public:
-                ConstIterator(const ChildrenMapWrapper& mapWrapper)
-                    : _lock(mapWrapper._mutex)
-                    , _it(mapWrapper._children.begin())
-                    , _endIt(mapWrapper._children.end())
-                {
-                }
-
-                ~ConstIterator()
-                {
-                }
-
-                const std::pair<const std::string, NodePtr>& operator*() const noexcept
-                {
-                    return *_it;
-                }
-
-                ConstIterator& operator++() noexcept
-                {
-                    ++_it;
-                    return *this;
-                }
-
-                bool operator!=(const ConstIteratorEndTag& endTag) const noexcept
-                {
-                    return _it != _endIt;
-                }
-            };
-
-            ConstIterator begin() const
-            {
-                return ConstIterator(*this);
+                return detail::SharedMutexMapConstIterator<std::string, NodePtr>(_mutex, _children);
             }
 
-            ConstIteratorEndTag end() const
+            detail::SharedMutexMapConstIteratorEndTag end() const
             {
-                return ConstIteratorEndTag();
+                return {};
             }
         };
 
