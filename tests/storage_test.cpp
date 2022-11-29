@@ -480,6 +480,29 @@ TEST(StorageTest, PathCanEndWithSeparator)
     EXPECT_EQ(*data, "data1"s);
 }
 
+TEST(StorageTest, UnmountPathMustMatchMountPathTrailingSeparator)
+{
+    jbkvs::NodePtr root = jbkvs::Node::create();
+
+    jbkvs::Storage storage;
+    bool mounted, unmounted;
+    mounted = storage.mount("/path/", root);
+
+    unmounted = storage.unmount("/path", root);
+    EXPECT_EQ(unmounted, false);
+
+    unmounted = storage.unmount("/path/", root);
+    EXPECT_EQ(unmounted, true);
+
+    mounted = storage.mount("/path", root);
+
+    unmounted = storage.unmount("/path/", root);
+    EXPECT_EQ(unmounted, false);
+
+    unmounted = storage.unmount("/path", root);
+    EXPECT_EQ(unmounted, true);
+}
+
 TEST(StorageTest, CreationOfMountedNodeChildAddsStorageNodeChild)
 {
     jbkvs::NodePtr node = jbkvs::Node::create();
